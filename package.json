@@ -4,7 +4,7 @@
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "dist": "mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js"
+    "dist": "rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js"
   },
   "repository": {
     "type": "git",
@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
+    "cdnizer": "^1.1.5",
     "progress": "^1.1.8"
   }
 }

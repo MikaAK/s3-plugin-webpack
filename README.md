@@ -60,3 +60,6 @@ var config = {
 - `include`: Regex to match for included content
 - `s3Options`: Provide bucket and keys for upload
 - `directory`: Provide a directory to upload (defaults to webpack output directory)
+- `htmlFiles`: Html files to cdnize (defaults to all in output directory)
+- `noCdnizer`: Disable cdnizer (defaults true if no cdnizerConfig passed)
+- `cdnizerConfig`: options to pass to cdnizer

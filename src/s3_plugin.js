@@ -6,21 +6,38 @@ import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
+import cdnizer from 'cdnizer'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
 export default class S3Plugin {
   constructor(options = {s3Options: {}}) {
-    var {s3Options, directory, include, exclude} = options
+    var {s3Options, directory, include, exclude, basePath, cdnizerOptions, htmlFiles} = options
 
     this.requiredS3Opts = ['accessKeyId', 'secretAccessKey', 'Bucket']
     this.isConnected = false
+    this.cdnizerOptions = cdnizerOptions
+    this.urlMappings = []
+    this.uploadTotal = 0
+    this.uploadProgress = 0
 
-    this.options = {directory, include, exclude}
+    this.options = {
+      directory, 
+      include, 
+      exclude, 
+      htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
+    }
+
     this.clientConfig = {
       maxAsyncS3: 50,
       s3Options
     }
+
+    if (!this.cdnizerOptions.files)
+      this.cdnizerOptions.files = []
+
+    if (!this.cdnizerOptions)
+      this.noCdnizer = true
   }
 
   apply(compiler) {
@@ -38,21 +55,54 @@ export default class S3Plugin {
 
       fs.readdir(this.options.directory, (error, files) => {
         if (error) {
-          compilation.errors.push(new Error('S3Plugin: ' + error))
+          compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error))
           cb()
         } else {
           this.uploadFiles(this.filterAllowedFiles(files))
+            .then(this.changeHtmlUrls.bind(this))
             .then(() => {
               console.log('Finished Uploading to S3')
               cb()
             })
             .catch(e => {
+              //console.log(e)
               compilation.errors.push(new Error('S3Plugin: ' + e))
               cb()
             })
         }
       })
     })
+  }
+
+  cdnizeHtml(htmlPath) {
+    return new Promise((resolve, reject) => {
+      fs.readFile(htmlPath, (err, data) => {
+        if (err)
+          return reject(err)
+
+        fs.writeFile(htmlPath, this.cdnizer(data.toString()), function(err) {
+          if (err)
+            return reject(err)
+
+          resolve()
+        })
+      })
+    })
+  }
+
+  changeHtmlUrls() {
+    if (this.noCdnizer)
+      return Promise.resolve()
+
+    var {directory, htmlFiles} = this.options
+
+    var allHtml = htmlFiles || fs.readdirSync(directory)
+      .filter(file => /\.html$/.test(file))
+      .map(file => path.resolve(directory, file))
+
+    this.cdnizer = cdnizer(this.cdnizerOptions)
+
+    return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
   }
 
   filterAllowedFiles(files) {
@@ -113,6 +163,8 @@ export default class S3Plugin {
       //total: 100
     //})
 
+    this.cdnizerOptions.files.push(fileName)
+
     console.log('Uploading ', fileName)
     return new Promise((resolve, reject) => {
       upload.on('error', reject)
@@ -120,12 +172,10 @@ export default class S3Plugin {
       upload.on('progress', function() {
         var progress = (upload.progressAmount / upload.progressTotal).toFixed(2)
 
-        if (progress === 100.00)
-          console.log('Finished Uploading ', fileName)
         //progressBar.update(progress)
       })
 
-      upload.on('end', resolve)
+      upload.on('end', () => resolve(file))
     })
   }
 }
