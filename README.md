@@ -12,12 +12,12 @@ $ npm i webpack-s3-plugin
 
 ### Usage Instructions
 
-#### Require `webpack-s3-plugin`
+##### Require `webpack-s3-plugin`
 ```javascript
 var S3Plugin = require('webpack-s3-plugin')
 ```
 
-#### With exclude
+##### With exclude
 ```javascript
 var config = {
   plugins: [
@@ -35,7 +35,7 @@ var config = {
 }
 ```
 
-#### With include
+##### With include
 ```javascript
 var config = {
   plugins: [
@@ -51,3 +51,11 @@ var config = {
     })
   ]
 }
+
+
+### Options
+
+`exclude`: Regex to match for excluded content
+`include`: Regex to match for included content
+`s3Options`: Provide bucket and keys for upload
+`directory`: Provide a directory to upload (defaults to webpack output directory)
