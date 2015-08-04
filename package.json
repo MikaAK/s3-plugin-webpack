@@ -22,5 +22,8 @@
   "bugs": {
     "url": "https://github.com/MikaAK/s3-plugin-webpack/issues"
   },
-  "homepage": "https://github.com/MikaAK/s3-plugin-webpack"
+  "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
+  "dependencies": {
+    "progress": "^1.1.8"
+  }
 }
