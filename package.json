@@ -1,0 +1,26 @@
+{
+  "name": "s3-plugin",
+  "version": "0.1.0",
+  "description": "Uploads compiled assets to s3 after build",
+  "main": "s3_plugin.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:MikaAK/s3-plugin-webpack.git"
+  },
+  "keywords": [
+    "s3",
+    "webpack",
+    "node",
+    "upload",
+    "production"
+  ],
+  "author": "Mika Kalathil",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/MikaAK/s3-plugin-webpack/issues"
+  },
+  "homepage": "https://github.com/MikaAK/s3-plugin-webpack"
+}
