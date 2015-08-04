@@ -1,10 +1,10 @@
 {
-  "name": "s3-plugin",
+  "name": "webpack-s3-plugin",
   "version": "0.1.0",
   "description": "Uploads compiled assets to s3 after build",
-  "main": "s3_plugin.js",
+  "main": "dist/s3_plugin.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dist": "mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js"
   },
   "repository": {
     "type": "git",
