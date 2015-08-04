@@ -51,6 +51,7 @@ var config = {
     })
   ]
 }
+```
 
 
 ### Options
