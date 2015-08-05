@@ -165,6 +165,9 @@ export default class S3Plugin {
   }
 
   uploadFile(fileName, file) {
+    if (fs.lstatSync(file).isDirectory())
+      return this.uploadFiles(this.filterAllowedFiles(fs.readdirSync(file)))
+
     var upload,
         s3Params = _.merge({Key: fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
      

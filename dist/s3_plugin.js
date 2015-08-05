@@ -229,6 +229,8 @@ var S3Plugin = (function () {
   }, {
     key: 'uploadFile',
     value: function uploadFile(fileName, file) {
+      if (_fs2['default'].lstatSync(file).isDirectory()) return this.uploadFiles(this.filterAllowedFiles(_fs2['default'].readdirSync(file)));
+
       var upload,
           s3Params = _lodash2['default'].merge({ Key: fileName }, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS);
 
