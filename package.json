@@ -25,6 +25,7 @@
   "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
     "cdnizer": "^1.1.5",
+    "lodash": "^3.10.1",
     "progress": "^1.1.8"
   }
 }

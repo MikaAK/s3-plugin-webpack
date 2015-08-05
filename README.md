@@ -28,8 +28,14 @@ var config = {
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-        Bucket: 'MyBucket'
-      }  
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket',
+        region: 'us-west-1' 
+      },
+      cdnizerConfig: {
+        defaultCDNBase: 'http://asdf.ca'  
+      }
     })
   ]
 }
@@ -46,8 +52,10 @@ var config = {
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      }, 
+      s3UploadOptions: {  
         Bucket: 'MyBucket'
-      }  
+      }
     })
   ]
 }
@@ -58,8 +66,9 @@ var config = {
 
 - `exclude`: Regex to match for excluded content
 - `include`: Regex to match for included content
-- `s3Options`: Provide bucket and keys for upload
+- `s3Options`: Provide keys for upload extention of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
+- `s3UploadOptions`: Provide upload options [putObject](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property )
 - `directory`: Provide a directory to upload (defaults to webpack output directory)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerConfig passed)
-- `cdnizerConfig`: options to pass to cdnizer
+- `cdnizerConfig`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)

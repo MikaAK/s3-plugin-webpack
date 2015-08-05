@@ -7,14 +7,25 @@ import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
+import _ from 'lodash'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
-export default class S3Plugin {
-  constructor(options = {s3Options: {}}) {
-    var {s3Options, directory, include, exclude, basePath, cdnizerOptions, htmlFiles} = options
+const DEFAULT_UPLOAD_OPTIONS = {
+  ACL: 'public-read'
+}
 
-    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey', 'Bucket']
+const DEFAULT_S3_OPTIONS = {
+  region: 'us-west-2'
+}
+
+export default class S3Plugin {
+  constructor(options = {}) {
+    var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions, htmlFiles} = options
+
+    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey']
+    this.requiredS3UpOpts = ['Bucket']
+    this.uploadOptions = s3UploadOptions
     this.isConnected = false
     this.cdnizerOptions = cdnizerOptions
     this.urlMappings = []
@@ -30,7 +41,7 @@ export default class S3Plugin {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options
+      s3Options: _.merge(s3Options, DEFAULT_S3_OPTIONS)
     }
 
     if (!this.cdnizerOptions.files)
@@ -44,12 +55,20 @@ export default class S3Plugin {
     var hasRequiredOptions = this.requiredS3Opts
       .every(type => this.clientConfig.s3Options[type])
 
+    var hasRequiredUploadOpts = this.requiredS3UpOpts
+      .every(type => this.uploadOptions[type])
+
     // Set directory to output dir or custom
-    this.options.directory = this.options.directory || compiler.options.output.path
+    this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.'
 
     compiler.plugin('after-emit', (compilation, cb) => {
       if (!hasRequiredOptions) {
-        compilation.errors.push(new Error('S3Plugin: Must provide Bucket, secretAccessKey and accessKeyId'))
+        compilation.errors.push(new Error('S3Plugin: Must provide ' + this.requiredS3Opts.join(' and ')))
+        cb()
+      }
+
+      if (!this.requiredS3UpOpts) {
+        compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + this.requiredS3UpOpts.join(' and ')))
         cb()
       }
 
@@ -65,7 +84,6 @@ export default class S3Plugin {
               cb()
             })
             .catch(e => {
-              //console.log(e)
               compilation.errors.push(new Error('S3Plugin: ' + e))
               cb()
             })
@@ -96,8 +114,7 @@ export default class S3Plugin {
 
     var {directory, htmlFiles} = this.options
 
-    var allHtml = htmlFiles || fs.readdirSync(directory)
-      .filter(file => /\.html$/.test(file))
+    var allHtml = (htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file)))
       .map(file => path.resolve(directory, file))
 
     this.cdnizer = cdnizer(this.cdnizerOptions)
@@ -148,13 +165,13 @@ export default class S3Plugin {
   }
 
   uploadFile(fileName, file) {
+    var upload,
+        s3Params = _.merge({Key: fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
+
     this.connect()
-    var upload = this.client.uploadFile({
+    upload = this.client.uploadFile({
       localFile: file,
-      s3Params: {
-        Key: fileName,
-        Bucket: this.clientConfig.s3Options.Bucket
-      }
+      s3Params 
     })
 
     //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
@@ -164,6 +181,7 @@ export default class S3Plugin {
     //})
 
     this.cdnizerOptions.files.push(fileName)
+    this.cdnizerOptions.files.push(fileName + '*')
 
     console.log('Uploading ', fileName)
     return new Promise((resolve, reject) => {
