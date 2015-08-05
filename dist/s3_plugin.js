@@ -38,15 +38,30 @@ var _cdnizer = require('cdnizer');
 
 var _cdnizer2 = _interopRequireDefault(_cdnizer);
 
+var _lodash = require('lodash');
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
 _http2['default'].globalAgent.maxSockets = _https2['default'].globalAgent.maxSockets = 50;
+
+var DEFAULT_UPLOAD_OPTIONS = {
+  ACL: 'public-read'
+};
+
+var DEFAULT_S3_OPTIONS = {
+  region: 'us-west-2'
+};
 
 var S3Plugin = (function () {
   function S3Plugin() {
-    var options = arguments.length <= 0 || arguments[0] === undefined ? { s3Options: {} } : arguments[0];
+    var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
     _classCallCheck(this, S3Plugin);
 
-    var s3Options = options.s3Options;
+    var _options$s3Options = options.s3Options;
+    var s3Options = _options$s3Options === undefined ? {} : _options$s3Options;
+    var _options$s3UploadOptions = options.s3UploadOptions;
+    var s3UploadOptions = _options$s3UploadOptions === undefined ? {} : _options$s3UploadOptions;
     var directory = options.directory;
     var include = options.include;
     var exclude = options.exclude;
@@ -54,7 +69,9 @@ var S3Plugin = (function () {
     var cdnizerOptions = options.cdnizerOptions;
     var htmlFiles = options.htmlFiles;
 
-    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey', 'Bucket'];
+    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey'];
+    this.requiredS3UpOpts = ['Bucket'];
+    this.uploadOptions = s3UploadOptions;
     this.isConnected = false;
     this.cdnizerOptions = cdnizerOptions;
     this.urlMappings = [];
@@ -70,7 +87,7 @@ var S3Plugin = (function () {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: s3Options
+      s3Options: _lodash2['default'].merge(s3Options, DEFAULT_S3_OPTIONS)
     };
 
     if (!this.cdnizerOptions.files) this.cdnizerOptions.files = [];
@@ -87,12 +104,21 @@ var S3Plugin = (function () {
         return _this.clientConfig.s3Options[type];
       });
 
+      var hasRequiredUploadOpts = this.requiredS3UpOpts.every(function (type) {
+        return _this.uploadOptions[type];
+      });
+
       // Set directory to output dir or custom
-      this.options.directory = this.options.directory || compiler.options.output.path;
+      this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.';
 
       compiler.plugin('after-emit', function (compilation, cb) {
         if (!hasRequiredOptions) {
-          compilation.errors.push(new Error('S3Plugin: Must provide Bucket, secretAccessKey and accessKeyId'));
+          compilation.errors.push(new Error('S3Plugin: Must provide ' + _this.requiredS3Opts.join(' and ')));
+          cb();
+        }
+
+        if (!_this.requiredS3UpOpts) {
+          compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + _this.requiredS3UpOpts.join(' and ')));
           cb();
         }
 
@@ -105,7 +131,6 @@ var S3Plugin = (function () {
               console.log('Finished Uploading to S3');
               cb();
             })['catch'](function (e) {
-              //console.log(e)
               compilation.errors.push(new Error('S3Plugin: ' + e));
               cb();
             });
@@ -141,9 +166,9 @@ var S3Plugin = (function () {
       var directory = _options.directory;
       var htmlFiles = _options.htmlFiles;
 
-      var allHtml = htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
+      var allHtml = (htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
         return /\.html$/.test(file);
-      }).map(function (file) {
+      })).map(function (file) {
         return _path2['default'].resolve(directory, file);
       });
 
@@ -204,13 +229,16 @@ var S3Plugin = (function () {
   }, {
     key: 'uploadFile',
     value: function uploadFile(fileName, file) {
+      var upload,
+          s3Params = _lodash2['default'].merge({ Key: fileName }, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS);
+
+      // Remove Gzip from encoding if ico
+      if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
+
       this.connect();
-      var upload = this.client.uploadFile({
+      upload = this.client.uploadFile({
         localFile: file,
-        s3Params: {
-          Key: fileName,
-          Bucket: this.clientConfig.s3Options.Bucket
-        }
+        s3Params: s3Params
       });
 
       //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
@@ -220,6 +248,7 @@ var S3Plugin = (function () {
       //})
 
       this.cdnizerOptions.files.push(fileName);
+      this.cdnizerOptions.files.push(fileName + '*');
 
       console.log('Uploading ', fileName);
       return new Promise(function (resolve, reject) {
