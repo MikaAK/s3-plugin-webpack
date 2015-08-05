@@ -167,6 +167,10 @@ export default class S3Plugin {
   uploadFile(fileName, file) {
     var upload,
         s3Params = _.merge({Key: fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
+     
+    // Remove Gzip from encoding if ico
+    if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
+      delete s3Params.ContentEncoding
 
     this.connect()
     upload = this.client.uploadFile({
