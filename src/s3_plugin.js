@@ -77,10 +77,9 @@ export default class S3Plugin {
           compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error))
           cb()
         } else {
-          this.uploadFiles(this.filterAllowedFiles(files))
+          this.uploadFiles(this.getAssetFiles(compilation))
             .then(this.changeHtmlUrls.bind(this))
             .then(() => {
-              console.log('Finished Uploading to S3')
               cb()
             })
             .catch(e => {
@@ -90,6 +89,22 @@ export default class S3Plugin {
         }
       })
     })
+  }
+  
+  getFileName(file = '') {
+    return file.search('/') === -1 ? file : file.match(/[^\/]+$/)[0]
+  }
+  
+  getAssetFiles({chunks, options}) {
+    var publicPath = options.output.publicPath || options.output.path
+
+    var files = _(chunks)
+      .pluck('files')
+      .flatten()
+      .map(file => path.resolve(publicPath, file))
+      .value()
+
+    return this.filterAllowedFiles(files)
   }
 
   cdnizeHtml(htmlPath) {
@@ -161,7 +176,38 @@ export default class S3Plugin {
   }
 
   uploadFiles(files = []) {
-    return Promise.all(files.map(file => this.uploadFile(file.name, file.path)))
+    var sum = (array) => array.reduce((res, val) => res += val, 0)
+    var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
+    var progressAmount = Array(files.length)
+    var progressTotal = Array(files.length)
+    var finishedUploads = []
+
+    console.log('Uploading Files: \n' + files.map(file => this.getFileName(file.name)).join('\n'))
+
+    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+      complete: '>',
+      incomplete: '-',
+      total: 100
+    })
+
+
+    uploadFiles.forEach(function({upload}, i) {
+      upload.on('end', function() {
+        finishedUploads.push(true)
+
+        if (finishedUploads.length === files.length)
+          progressBar.update(100)
+      })
+
+      upload.on('progress', function() {
+        progressTotal[i] = this.progressTotal
+        progressAmount[i] = this.progressAmount
+
+        progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2))
+      })
+    })
+    
+    return Promise.all(uploadFiles.map(({promise}) => promise))
   }
 
   uploadFile(fileName, file) {
@@ -181,26 +227,15 @@ export default class S3Plugin {
       s3Params 
     })
 
-    //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '-',
-      //total: 100
-    //})
-
     this.cdnizerOptions.files.push(fileName)
     this.cdnizerOptions.files.push(fileName + '*')
 
-    console.log('Uploading ', fileName)
-    return new Promise((resolve, reject) => {
+    var promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
-
-      upload.on('progress', function() {
-        var progress = (upload.progressAmount / upload.progressTotal).toFixed(2)
-
-        //progressBar.update(progress)
-      })
-
       upload.on('end', () => resolve(file))
     })
+
+
+    return {upload, promise} 
   }
 }

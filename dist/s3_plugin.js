@@ -127,8 +127,7 @@ var S3Plugin = (function () {
             compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error));
             cb();
           } else {
-            _this.uploadFiles(_this.filterAllowedFiles(files)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
-              console.log('Finished Uploading to S3');
+            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
               cb();
             })['catch'](function (e) {
               compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -137,6 +136,27 @@ var S3Plugin = (function () {
           }
         });
       });
+    }
+  }, {
+    key: 'getFileName',
+    value: function getFileName() {
+      var file = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
+
+      return file.search('/') === -1 ? file : file.match(/[^\/]+$/)[0];
+    }
+  }, {
+    key: 'getAssetFiles',
+    value: function getAssetFiles(_ref) {
+      var chunks = _ref.chunks;
+      var options = _ref.options;
+
+      var publicPath = options.output.publicPath || options.output.path;
+
+      var files = (0, _lodash2['default'])(chunks).pluck('files').flatten().map(function (file) {
+        return _path2['default'].resolve(publicPath, file);
+      }).value();
+
+      return this.filterAllowedFiles(files);
     }
   }, {
     key: 'cdnizeHtml',
@@ -222,8 +242,44 @@ var S3Plugin = (function () {
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
-      return Promise.all(files.map(function (file) {
+      var sum = function sum(array) {
+        return array.reduce(function (res, val) {
+          return res += val;
+        }, 0);
+      };
+      var uploadFiles = files.map(function (file) {
         return _this5.uploadFile(file.name, file.path);
+      });
+      var progressAmount = Array(files.length);
+      var progressTotal = Array(files.length);
+      var finishedUploads = [];
+
+      var progressBar = new _progress2['default']('Uploading [:bar] :percent :etas', {
+        complete: '>',
+        incomplete: '-',
+        total: 100
+      });
+
+      uploadFiles.forEach(function (_ref2, i) {
+        var upload = _ref2.upload;
+
+        upload.on('end', function () {
+          finishedUploads.push(true);
+
+          if (finishedUploads.length === files.length) progressBar.update(100);
+        });
+
+        upload.on('progress', function () {
+          progressTotal[i] = this.progressTotal;
+          progressAmount[i] = this.progressAmount;
+
+          progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2));
+        });
+      });
+
+      return Promise.all(uploadFiles.map(function (_ref3) {
+        var promise = _ref3.promise;
+        return promise;
       }));
     }
   }, {
@@ -243,30 +299,17 @@ var S3Plugin = (function () {
         s3Params: s3Params
       });
 
-      //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '-',
-      //total: 100
-      //})
-
       this.cdnizerOptions.files.push(fileName);
       this.cdnizerOptions.files.push(fileName + '*');
 
-      console.log('Uploading ', fileName);
-      return new Promise(function (resolve, reject) {
+      var promise = new Promise(function (resolve, reject) {
         upload.on('error', reject);
-
-        upload.on('progress', function () {
-          var progress = (upload.progressAmount / upload.progressTotal).toFixed(2)
-
-          //progressBar.update(progress)
-          ;
-        });
-
         upload.on('end', function () {
           return resolve(file);
         });
       });
+
+      return { upload: upload, promise: promise };
     }
   }]);
 
