@@ -1,6 +1,6 @@
 {
   "name": "webpack-s3-plugin",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
