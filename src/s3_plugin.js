@@ -19,12 +19,13 @@ const DEFAULT_S3_OPTIONS = {
   region: 'us-west-2'
 }
 
+const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
+      REQUIRED_S3_UP_OPTS = ['Bucket']
+
 export default class S3Plugin {
   constructor(options = {}) {
     var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions, htmlFiles} = options
 
-    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey']
-    this.requiredS3UpOpts = ['Bucket']
     this.uploadOptions = s3UploadOptions
     this.isConnected = false
     this.cdnizerOptions = cdnizerOptions
@@ -52,10 +53,10 @@ export default class S3Plugin {
   }
 
   apply(compiler) {
-    var hasRequiredOptions = this.requiredS3Opts
+    var hasRequiredOptions = REQUIRED_S3_OPTS
       .every(type => this.clientConfig.s3Options[type])
 
-    var hasRequiredUploadOpts = this.requiredS3UpOpts
+    var hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS
       .every(type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
@@ -63,12 +64,12 @@ export default class S3Plugin {
 
     compiler.plugin('after-emit', (compilation, cb) => {
       if (!hasRequiredOptions) {
-        compilation.errors.push(new Error('S3Plugin: Must provide ' + this.requiredS3Opts.join(' and ')))
+        compilation.errors.push(new Error('S3Plugin: Must provide ' + REQUIRED_S3_OPTS.join(', ')))
         cb()
       }
 
-      if (!this.requiredS3UpOpts) {
-        compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + this.requiredS3UpOpts.join(' and ')))
+      if (!REQUIRED_S3_UP_OPTS) {
+        compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')))
         cb()
       }
 
@@ -190,15 +191,7 @@ export default class S3Plugin {
       total: 100
     })
 
-
     uploadFiles.forEach(function({upload}, i) {
-      upload.on('end', function() {
-        finishedUploads.push(true)
-
-        if (finishedUploads.length === files.length)
-          progressBar.update(100)
-      })
-
       upload.on('progress', function() {
         progressTotal[i] = this.progressTotal
         progressAmount[i] = this.progressAmount
