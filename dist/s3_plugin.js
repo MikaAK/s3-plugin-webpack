@@ -52,6 +52,9 @@ var DEFAULT_S3_OPTIONS = {
   region: 'us-west-2'
 };
 
+var REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
+    REQUIRED_S3_UP_OPTS = ['Bucket'];
+
 var S3Plugin = (function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -69,8 +72,6 @@ var S3Plugin = (function () {
     var cdnizerOptions = options.cdnizerOptions;
     var htmlFiles = options.htmlFiles;
 
-    this.requiredS3Opts = ['accessKeyId', 'secretAccessKey'];
-    this.requiredS3UpOpts = ['Bucket'];
     this.uploadOptions = s3UploadOptions;
     this.isConnected = false;
     this.cdnizerOptions = cdnizerOptions;
@@ -100,11 +101,11 @@ var S3Plugin = (function () {
     value: function apply(compiler) {
       var _this = this;
 
-      var hasRequiredOptions = this.requiredS3Opts.every(function (type) {
+      var hasRequiredOptions = REQUIRED_S3_OPTS.every(function (type) {
         return _this.clientConfig.s3Options[type];
       });
 
-      var hasRequiredUploadOpts = this.requiredS3UpOpts.every(function (type) {
+      var hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(function (type) {
         return _this.uploadOptions[type];
       });
 
@@ -113,12 +114,12 @@ var S3Plugin = (function () {
 
       compiler.plugin('after-emit', function (compilation, cb) {
         if (!hasRequiredOptions) {
-          compilation.errors.push(new Error('S3Plugin: Must provide ' + _this.requiredS3Opts.join(' and ')));
+          compilation.errors.push(new Error('S3Plugin: Must provide ' + REQUIRED_S3_OPTS.join(', ')));
           cb();
         }
 
-        if (!_this.requiredS3UpOpts) {
-          compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + _this.requiredS3UpOpts.join(' and ')));
+        if (!REQUIRED_S3_UP_OPTS) {
+          compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')));
           cb();
         }
 
@@ -204,10 +205,12 @@ var S3Plugin = (function () {
       var _this4 = this;
 
       return files.reduce(function (res, file) {
-        if (_this4.isIncludeOrExclude(file)) res.push({
-          name: file,
-          path: _path2['default'].resolve(_this4.options.directory, file)
-        });
+        if (_this4.isIncludeOrExclude(file)) {
+          res.push({
+            name: _this4.getFileName(file),
+            path: file
+          });
+        }
 
         return res;
       }, []);
@@ -254,6 +257,10 @@ var S3Plugin = (function () {
       var progressTotal = Array(files.length);
       var finishedUploads = [];
 
+      console.log('Uploading Files: \n' + files.map(function (file) {
+        return file.name;
+      }).join('\n'));
+
       var progressBar = new _progress2['default']('Uploading [:bar] :percent :etas', {
         complete: '>',
         incomplete: '-',
@@ -262,12 +269,6 @@ var S3Plugin = (function () {
 
       uploadFiles.forEach(function (_ref2, i) {
         var upload = _ref2.upload;
-
-        upload.on('end', function () {
-          finishedUploads.push(true);
-
-          if (finishedUploads.length === files.length) progressBar.update(100);
-        });
 
         upload.on('progress', function () {
           progressTotal[i] = this.progressTotal;
@@ -299,8 +300,7 @@ var S3Plugin = (function () {
         s3Params: s3Params
       });
 
-      this.cdnizerOptions.files.push(fileName);
-      this.cdnizerOptions.files.push(fileName + '*');
+      this.cdnizerOptions.files.push('*' + fileName + '*');
 
       var promise = new Promise(function (resolve, reject) {
         upload.on('error', reject);
