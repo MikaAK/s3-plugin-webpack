@@ -5,8 +5,8 @@
   "main": "dist/s3_plugin.js",
   "scripts": {
     "dist": "rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
-    "patch": "npm version patch && git push & npm publish",
-    "minor": "npm version minor && git push & npm publish"
+    "patch": "npm version patch && git push && npm publish",
+    "minor": "npm version minor && git push && npm publish"
   },
   "repository": {
     "type": "git",
