@@ -139,12 +139,13 @@ export default class S3Plugin {
   }
 
   filterAllowedFiles(files) {
-    return files.reduce((res, file) => {
-      if (this.isIncludeOrExclude(file))
+    return files.reduce((res, file) => { 
+      if (this.isIncludeOrExclude(file)) {
         res.push({
-          name: file,
-          path: path.resolve(this.options.directory, file)
+          name: this.getFileName(file),
+          path: file
         })
+      }
 
       return res
     }, [])
@@ -183,7 +184,7 @@ export default class S3Plugin {
     var progressTotal = Array(files.length)
     var finishedUploads = []
 
-    console.log('Uploading Files: \n' + files.map(file => this.getFileName(file.name)).join('\n'))
+    console.log('Uploading Files: \n' + files.map(file => file.name).join('\n'))
 
     var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
@@ -220,8 +221,7 @@ export default class S3Plugin {
       s3Params 
     })
 
-    this.cdnizerOptions.files.push(fileName)
-    this.cdnizerOptions.files.push(fileName + '*')
+    this.cdnizerOptions.files.push('*' + fileName + '*')
 
     var promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
