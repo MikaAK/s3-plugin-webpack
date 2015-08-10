@@ -34,15 +34,15 @@ export default class S3Plugin {
     this.uploadProgress = 0
 
     this.options = {
-      directory, 
-      include, 
-      exclude, 
+      directory,
+      include,
+      exclude,
       htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
     }
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _.merge(s3Options, DEFAULT_S3_OPTIONS)
+      s3Options: _.merge(DEFAULT_S3_OPTIONS, s3Options)
     }
 
     if (!this.cdnizerOptions.files)

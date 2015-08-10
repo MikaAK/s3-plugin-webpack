@@ -88,7 +88,7 @@ var S3Plugin = (function () {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _lodash2['default'].merge(s3Options, DEFAULT_S3_OPTIONS)
+      s3Options: _lodash2['default'].merge(DEFAULT_S3_OPTIONS, s3Options)
     };
 
     if (!this.cdnizerOptions.files) this.cdnizerOptions.files = [];
@@ -188,7 +188,8 @@ var S3Plugin = (function () {
       var htmlFiles = _options.htmlFiles;
 
       var allHtml = (htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
-        return /\.html$/.test(file);
+        return (/\.html$/.test(file)
+        );
       })).map(function (file) {
         return _path2['default'].resolve(directory, file);
       });

@@ -26,8 +26,12 @@
   },
   "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
+    "s3": "^4.4.0",
     "cdnizer": "^1.1.5",
     "lodash": "^3.10.1",
     "progress": "^1.1.8"
+  },
+  "devDependencies": {
+    "babel": "^5.8.21"
   }
 }
