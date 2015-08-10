@@ -9,6 +9,7 @@ This plugin will upload all built assets to s3
 ```bash
 $ npm i webpack-s3-plugin
 ```
+Note: This plugin needs NodeJS > 0.12.0
 
 ### Usage Instructions
 
@@ -28,13 +29,13 @@ var config = {
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        region: 'us-west-1'
       },
       s3UploadOptions: {
-        Bucket: 'MyBucket',
-        region: 'us-west-1' 
+        Bucket: 'MyBucket'
       },
       cdnizerConfig: {
-        defaultCDNBase: 'http://asdf.ca'  
+        defaultCDNBase: 'http://asdf.ca'
       }
     })
   ]
