@@ -42,7 +42,7 @@ export default class S3Plugin {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _.merge(DEFAULT_S3_OPTIONS, s3Options)
+      s3Options: _.merge({}, DEFAULT_S3_OPTIONS, s3Options)
     }
 
     if (!this.cdnizerOptions.files)
