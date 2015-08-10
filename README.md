@@ -53,8 +53,8 @@ var config = {
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      }, 
-      s3UploadOptions: {  
+      },
+      s3UploadOptions: {
         Bucket: 'MyBucket'
       }
     })
@@ -69,6 +69,7 @@ var config = {
 - `include`: Regex to match for included content
 - `s3Options`: Provide keys for upload extention of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
 - `s3UploadOptions`: Provide upload options [putObject](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property )
+- `basePath`: Provide the namespace where upload files on S3
 - `directory`: Provide a directory to upload (defaults to webpack output directory)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerConfig passed)
