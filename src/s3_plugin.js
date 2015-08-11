@@ -32,6 +32,7 @@ export default class S3Plugin {
     this.urlMappings = []
     this.uploadTotal = 0
     this.uploadProgress = 0
+    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
       directory,

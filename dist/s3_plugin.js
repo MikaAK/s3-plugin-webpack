@@ -78,17 +78,19 @@ var S3Plugin = (function () {
     this.urlMappings = [];
     this.uploadTotal = 0;
     this.uploadProgress = 0;
+    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
       directory: directory,
       include: include,
       exclude: exclude,
+      basePath: basePath,
       htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
     };
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _lodash2['default'].merge(DEFAULT_S3_OPTIONS, s3Options)
+      s3Options: _lodash2['default'].merge({}, DEFAULT_S3_OPTIONS, s3Options)
     };
 
     if (!this.cdnizerOptions.files) this.cdnizerOptions.files = [];
@@ -290,7 +292,7 @@ var S3Plugin = (function () {
       if (_fs2['default'].lstatSync(file).isDirectory()) return this.uploadFiles(this.filterAllowedFiles(_fs2['default'].readdirSync(file)));
 
       var upload,
-          s3Params = _lodash2['default'].merge({ Key: fileName }, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS);
+          s3Params = _lodash2['default'].merge({ Key: this.options.basePath + fileName }, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS);
 
       // Remove Gzip from encoding if ico
       if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
