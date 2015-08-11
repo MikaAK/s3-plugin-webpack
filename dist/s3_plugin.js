@@ -190,8 +190,7 @@ var S3Plugin = (function () {
       var htmlFiles = _options.htmlFiles;
 
       var allHtml = (htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
-        return (/\.html$/.test(file)
-        );
+        return /\.html$/.test(file);
       })).map(function (file) {
         return _path2['default'].resolve(directory, file);
       });
