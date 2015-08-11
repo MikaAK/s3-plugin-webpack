@@ -32,11 +32,13 @@ export default class S3Plugin {
     this.urlMappings = []
     this.uploadTotal = 0
     this.uploadProgress = 0
+    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
       directory,
       include,
       exclude,
+      basePath,
       htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
     }
 
@@ -91,11 +93,11 @@ export default class S3Plugin {
       })
     })
   }
-  
+
   getFileName(file = '') {
     return file.search('/') === -1 ? file : file.match(/[^\/]+$/)[0]
   }
-  
+
   getAssetFiles({chunks, options}) {
     var publicPath = options.output.publicPath || options.output.path
 
@@ -139,7 +141,7 @@ export default class S3Plugin {
   }
 
   filterAllowedFiles(files) {
-    return files.reduce((res, file) => { 
+    return files.reduce((res, file) => {
       if (this.isIncludeOrExclude(file)) {
         res.push({
           name: this.getFileName(file),
@@ -158,7 +160,7 @@ export default class S3Plugin {
 
     if (!include)
       isInclude = true
-    else 
+    else
       isInclude = include.test(file)
 
     if (!exclude)
@@ -200,7 +202,7 @@ export default class S3Plugin {
         progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2))
       })
     })
-    
+
     return Promise.all(uploadFiles.map(({promise}) => promise))
   }
 
@@ -209,8 +211,8 @@ export default class S3Plugin {
       return this.uploadFiles(this.filterAllowedFiles(fs.readdirSync(file)))
 
     var upload,
-        s3Params = _.merge({Key: fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
-     
+        s3Params = _.merge({Key: this.options.basePath + fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
+
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
@@ -218,7 +220,7 @@ export default class S3Plugin {
     this.connect()
     upload = this.client.uploadFile({
       localFile: file,
-      s3Params 
+      s3Params
     })
 
     this.cdnizerOptions.files.push('*' + fileName + '*')
@@ -229,6 +231,6 @@ export default class S3Plugin {
     })
 
 
-    return {upload, promise} 
+    return {upload, promise}
   }
 }
