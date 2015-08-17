@@ -130,9 +130,7 @@ var S3Plugin = (function () {
             compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error));
             cb();
           } else {
-            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
-              cb();
-            })['catch'](function (e) {
+            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(cb)['catch'](function (e) {
               compilation.errors.push(new Error('S3Plugin: ' + e));
               cb();
             });
@@ -226,9 +224,8 @@ var S3Plugin = (function () {
       var include = _options2.include;
       var exclude = _options2.exclude;
 
-      if (!include) isInclude = true;else isInclude = include.test(file);
-
-      if (!exclude) isExclude = false;else isExclude = exclude.test(file);
+      isInclude = include ? include.test(file) : include;
+      isExclude = exclude ? exclude.test(file) : exclude;
 
       return isInclude && !isExclude;
     }
@@ -259,10 +256,6 @@ var S3Plugin = (function () {
       var progressTotal = Array(files.length);
       var finishedUploads = [];
 
-      console.log('Uploading Files: \n' + files.map(function (file) {
-        return file.name;
-      }).join('\n'));
-
       var progressBar = new _progress2['default']('Uploading [:bar] :percent :etas', {
         complete: '>',
         incomplete: '-',
@@ -291,7 +284,7 @@ var S3Plugin = (function () {
       if (_fs2['default'].lstatSync(file).isDirectory()) return this.uploadFiles(this.filterAllowedFiles(_fs2['default'].readdirSync(file)));
 
       var upload,
-          s3Params = _lodash2['default'].merge({ Key: this.options.basePath + fileName }, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS);
+          s3Params = _lodash2['default'].merge({ Key: this.options.basePath + fileName }, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions);
 
       // Remove Gzip from encoding if ico
       if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;

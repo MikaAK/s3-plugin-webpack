@@ -82,9 +82,7 @@ export default class S3Plugin {
         } else {
           this.uploadFiles(this.getAssetFiles(compilation))
             .then(this.changeHtmlUrls.bind(this))
-            .then(() => {
-              cb()
-            })
+            .then(cb)
             .catch(e => {
               compilation.errors.push(new Error('S3Plugin: ' + e))
               cb()
@@ -158,15 +156,8 @@ export default class S3Plugin {
         isInclude,
         {include, exclude} = this.options
 
-    if (!include)
-      isInclude = true
-    else
-      isInclude = include.test(file)
-
-    if (!exclude)
-      isExclude = false
-    else
-      isExclude = exclude.test(file)
+    isInclude = include ? include.test(file) : include
+    isExclude = exclude ? exclude.test(file) : exclude
 
     return isInclude && !isExclude
   }
@@ -185,8 +176,6 @@ export default class S3Plugin {
     var progressAmount = Array(files.length)
     var progressTotal = Array(files.length)
     var finishedUploads = []
-
-    console.log('Uploading Files: \n' + files.map(file => file.name).join('\n'))
 
     var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
@@ -211,7 +200,7 @@ export default class S3Plugin {
       return this.uploadFiles(this.filterAllowedFiles(fs.readdirSync(file)))
 
     var upload,
-        s3Params = _.merge({Key: this.options.basePath + fileName}, this.uploadOptions, DEFAULT_UPLOAD_OPTIONS)
+        s3Params = _.merge({Key: this.options.basePath + fileName}, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions)
 
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
