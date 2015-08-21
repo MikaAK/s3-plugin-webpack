@@ -24,7 +24,7 @@ const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
 
 export default class S3Plugin {
   constructor(options = {}) {
-    var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions, htmlFiles} = options
+    var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
 
     this.uploadOptions = s3UploadOptions
     this.isConnected = false

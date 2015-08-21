@@ -69,7 +69,8 @@ var S3Plugin = (function () {
     var include = options.include;
     var exclude = options.exclude;
     var basePath = options.basePath;
-    var cdnizerOptions = options.cdnizerOptions;
+    var _options$cdnizerOptions = options.cdnizerOptions;
+    var cdnizerOptions = _options$cdnizerOptions === undefined ? {} : _options$cdnizerOptions;
     var htmlFiles = options.htmlFiles;
 
     this.uploadOptions = s3UploadOptions;
