@@ -46,12 +46,11 @@ export default class S3Plugin {
       maxAsyncS3: 50,
       s3Options: _.merge({}, DEFAULT_S3_OPTIONS, s3Options)
     }
+    
+    this.noCdnizer = !Object.keys(this.cdnizerOptions).length
 
-    if (!this.cdnizerOptions.files)
+    if (!this.noCdnizer && !this.cdnizerOptions.files)
       this.cdnizerOptions.files = []
-
-    if (!this.cdnizerOptions)
-      this.noCdnizer = true
   }
 
   apply(compiler) {
@@ -82,7 +81,7 @@ export default class S3Plugin {
         } else {
           this.uploadFiles(this.getAssetFiles(compilation))
             .then(this.changeHtmlUrls.bind(this))
-            .then(cb)
+            .then(() => cb())
             .catch(e => {
               compilation.errors.push(new Error('S3Plugin: ' + e))
               cb()
@@ -133,6 +132,7 @@ export default class S3Plugin {
     var allHtml = (htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file)))
       .map(file => path.resolve(directory, file))
 
+
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
@@ -156,8 +156,8 @@ export default class S3Plugin {
         isInclude,
         {include, exclude} = this.options
 
-    isInclude = include ? include.test(file) : include
-    isExclude = exclude ? exclude.test(file) : exclude
+    isInclude = include ? include.test(file) : true
+    isExclude = exclude ? exclude.test(file) : false 
 
     return isInclude && !isExclude
   }
@@ -207,6 +207,7 @@ export default class S3Plugin {
       delete s3Params.ContentEncoding
 
     this.connect()
+
     upload = this.client.uploadFile({
       localFile: file,
       s3Params
@@ -218,7 +219,6 @@ export default class S3Plugin {
       upload.on('error', reject)
       upload.on('end', () => resolve(file))
     })
-
 
     return {upload, promise}
   }

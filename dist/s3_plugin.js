@@ -94,9 +94,9 @@ var S3Plugin = (function () {
       s3Options: _lodash2['default'].merge({}, DEFAULT_S3_OPTIONS, s3Options)
     };
 
-    if (!this.cdnizerOptions.files) this.cdnizerOptions.files = [];
+    this.noCdnizer = !Object.keys(this.cdnizerOptions).length;
 
-    if (!this.cdnizerOptions) this.noCdnizer = true;
+    if (!this.noCdnizer && !this.cdnizerOptions.files) this.cdnizerOptions.files = [];
   }
 
   _createClass(S3Plugin, [{
@@ -131,7 +131,9 @@ var S3Plugin = (function () {
             compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error));
             cb();
           } else {
-            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(cb)['catch'](function (e) {
+            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+              return cb();
+            })['catch'](function (e) {
               compilation.errors.push(new Error('S3Plugin: ' + e));
               cb();
             });
@@ -225,8 +227,8 @@ var S3Plugin = (function () {
       var include = _options2.include;
       var exclude = _options2.exclude;
 
-      isInclude = include ? include.test(file) : include;
-      isExclude = exclude ? exclude.test(file) : exclude;
+      isInclude = include ? include.test(file) : true;
+      isExclude = exclude ? exclude.test(file) : false;
 
       return isInclude && !isExclude;
     }
@@ -291,6 +293,7 @@ var S3Plugin = (function () {
       if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
 
       this.connect();
+
       upload = this.client.uploadFile({
         localFile: file,
         s3Params: s3Params
