@@ -299,7 +299,7 @@ var S3Plugin = (function () {
         s3Params: s3Params
       });
 
-      this.cdnizerOptions.files.push('*' + fileName + '*');
+      if (!this.noCdnizer) this.cdnizerOptions.files.push('*' + fileName + '*');
 
       var promise = new Promise(function (resolve, reject) {
         upload.on('error', reject);

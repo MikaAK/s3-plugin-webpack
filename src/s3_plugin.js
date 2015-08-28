@@ -213,7 +213,8 @@ export default class S3Plugin {
       s3Params
     })
 
-    this.cdnizerOptions.files.push('*' + fileName + '*')
+    if (!this.noCdnizer)
+      this.cdnizerOptions.files.push('*' + fileName + '*')
 
     var promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
