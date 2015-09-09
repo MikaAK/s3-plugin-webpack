@@ -54,6 +54,7 @@ export default class S3Plugin {
   }
 
   apply(compiler) {
+    var isDirectoryUpload = !!this.options.directory
     var hasRequiredOptions = REQUIRED_S3_OPTS
       .every(type => this.clientConfig.s3Options[type])
 
@@ -74,20 +75,31 @@ export default class S3Plugin {
         cb()
       }
 
-      fs.readdir(this.options.directory, (error, files) => {
-        if (error) {
-          compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error))
-          cb()
-        } else {
-          this.uploadFiles(this.getAssetFiles(compilation))
-            .then(this.changeHtmlUrls.bind(this))
-            .then(() => cb())
-            .catch(e => {
-              compilation.errors.push(new Error('S3Plugin: ' + e))
-              cb()
-            })
-        }
-      })
+      if (isDirectoryUpload)
+        fs.readdir(this.options.directory, (error, files) => {
+          if (error) {
+            compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error))
+            cb()
+          } else {
+            const path = /\/$/.test(this.options.directory) ? this.options.directory : `${this.options.directory}/`
+
+            this.uploadFiles(this.filterAllowedFiles(files.map(file =>  path + file)))
+              .then(this.changeHtmlUrls.bind(this))
+              .then(() => cb())
+              .catch(e => {
+                compilation.errors.push(new Error('S3Plugin: ' + e))
+                cb()
+              })
+          }
+        })
+      else
+        this.uploadFiles(this.getAssetFiles(compilation))
+          .then(this.changeHtmlUrls.bind(this))
+          .then(() => cb())
+          .catch(e => {
+            compilation.errors.push(new Error('S3Plugin: ' + e))
+            cb()
+          })
     })
   }
 
