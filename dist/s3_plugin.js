@@ -104,6 +104,7 @@ var S3Plugin = (function () {
     value: function apply(compiler) {
       var _this = this;
 
+      var isDirectoryUpload = !!this.options.directory;
       var hasRequiredOptions = REQUIRED_S3_OPTS.every(function (type) {
         return _this.clientConfig.s3Options[type];
       });
@@ -126,18 +127,29 @@ var S3Plugin = (function () {
           cb();
         }
 
-        _fs2['default'].readdir(_this.options.directory, function (error, files) {
+        if (isDirectoryUpload) _fs2['default'].readdir(_this.options.directory, function (error, files) {
           if (error) {
             compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error));
             cb();
           } else {
-            _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
-              return cb();
-            })['catch'](function (e) {
-              compilation.errors.push(new Error('S3Plugin: ' + e));
-              cb();
-            });
+            (function () {
+              var path = /\/$/.test(_this.options.directory) ? _this.options.directory : _this.options.directory + '/';
+
+              _this.uploadFiles(_this.filterAllowedFiles(files.map(function (file) {
+                return path + file;
+              }))).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+                return cb();
+              })['catch'](function (e) {
+                compilation.errors.push(new Error('S3Plugin: ' + e));
+                cb();
+              });
+            })();
           }
+        });else _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+          return cb();
+        })['catch'](function (e) {
+          compilation.errors.push(new Error('S3Plugin: ' + e));
+          cb();
         });
       });
     }
@@ -191,7 +203,8 @@ var S3Plugin = (function () {
       var htmlFiles = _options.htmlFiles;
 
       var allHtml = (htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
-        return /\.html$/.test(file);
+        return (/\.html$/.test(file)
+        );
       })).map(function (file) {
         return _path2['default'].resolve(directory, file);
       });
