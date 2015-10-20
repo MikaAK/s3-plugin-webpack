@@ -1,3 +1,4 @@
+[![Stories in Ready](https://badge.waffle.io/MikaAK/s3-plugin-webpack.png?label=ready&title=Ready)](https://waffle.io/MikaAK/s3-plugin-webpack)
 S3 Plugin
 ===
 
