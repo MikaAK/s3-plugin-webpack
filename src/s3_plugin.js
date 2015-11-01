@@ -55,8 +55,9 @@ export default class S3Plugin {
 
   apply(compiler) {
     var isDirectoryUpload = !!this.options.directory
-    var hasRequiredOptions = REQUIRED_S3_OPTS
-      .every(type => this.clientConfig.s3Options[type])
+
+    this.connect()
+    var hasRequiredOptions = this.client.s3.config.credentials !== null
 
     var hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS
       .every(type => this.uploadOptions[type])
