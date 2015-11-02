@@ -54,13 +54,11 @@ export default class S3Plugin {
   }
 
   apply(compiler) {
-    var isDirectoryUpload = !!this.options.directory
-
     this.connect()
-    var hasRequiredOptions = this.client.s3.config.credentials !== null
 
-    var hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS
-      .every(type => this.uploadOptions[type])
+    var isDirectoryUpload = !!this.options.directory,
+        hasRequiredOptions = this.client.s3.config.credentials !== null,
+        hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
     this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.'
@@ -218,8 +216,6 @@ export default class S3Plugin {
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
-
-    this.connect()
 
     upload = this.client.uploadFile({
       localFile: file,

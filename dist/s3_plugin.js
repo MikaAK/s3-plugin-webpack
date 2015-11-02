@@ -104,12 +104,11 @@ var S3Plugin = (function () {
     value: function apply(compiler) {
       var _this = this;
 
-      var isDirectoryUpload = !!this.options.directory;
-
       this.connect();
-      var hasRequiredOptions = this.client.s3.config.credentials !== null;
 
-      var hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(function (type) {
+      var isDirectoryUpload = !!this.options.directory,
+          hasRequiredOptions = this.client.s3.config.credentials !== null,
+          hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(function (type) {
         return _this.uploadOptions[type];
       });
 
@@ -304,8 +303,6 @@ var S3Plugin = (function () {
 
       // Remove Gzip from encoding if ico
       if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
-
-      this.connect();
 
       upload = this.client.uploadFile({
         localFile: file,
