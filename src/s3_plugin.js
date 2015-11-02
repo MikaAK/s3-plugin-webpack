@@ -11,6 +11,10 @@ import _ from 'lodash'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
+const UPLOAD_IGNORES = [
+  '.DS_Store'
+]
+
 const DEFAULT_UPLOAD_OPTIONS = {
   ACL: 'public-read'
 }
@@ -69,7 +73,7 @@ export default class S3Plugin {
         cb()
       }
 
-      if (!REQUIRED_S3_UP_OPTS) {
+      if (!hasRequiredUploadOpts) {
         compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')))
         cb()
       }
@@ -82,7 +86,9 @@ export default class S3Plugin {
           } else {
             const path = /\/$/.test(this.options.directory) ? this.options.directory : `${this.options.directory}/`
 
-            this.uploadFiles(this.filterAllowedFiles(files.map(file =>  path + file)))
+            this.getAllFilesRecursive(path)
+              .then(this.filterAllowedFiles.bind(this))
+              .then(this.uploadFiles.bind(this))
               .then(this.changeHtmlUrls.bind(this))
               .then(() => cb())
               .catch(e => {
@@ -100,6 +106,45 @@ export default class S3Plugin {
             cb()
           })
     })
+  }
+
+  getAllFilesRecursive(path) {
+    return new Promise((resolve, reject) => {
+      var results = []
+
+      fs.readdir(path, function(err, list) {
+        if (err) 
+          return reject(err)
+
+        var i = 0;
+
+        (function next() {
+          var file = list[i++]
+
+          if (!file)
+            return resolve(results)
+
+          file = (path.endsWith('/') || file.startsWith('/') ? path : `${path}/`) + file
+
+          fs.stat(file, function(err, stat) {
+            if (stat && stat.isDirectory()) {
+              this.getAllFilesRecursive(file)
+                .then((res) => {
+                  results.push(...res)
+                  next()
+                })
+            } else {
+              results.push(file)
+              next()
+            }
+          })
+        })()
+      })
+    })
+  }
+
+  addPathToFiles(files, fPath) {
+    return files.map(file => path.resolve(fPath, file))
   }
 
   getFileName(file = '') {
@@ -138,11 +183,9 @@ export default class S3Plugin {
     if (this.noCdnizer)
       return Promise.resolve()
 
-    var {directory, htmlFiles} = this.options
-
-    var allHtml = (htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file)))
-      .map(file => path.resolve(directory, file))
-
+    var {directory, htmlFiles} = this.options,
+        htmlFiles = htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file)),
+        allHtml = this.addPathToFiles(htmlFiles, directory)
 
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
@@ -151,15 +194,18 @@ export default class S3Plugin {
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
-      if (this.isIncludeOrExclude(file)) {
+      if (this.isIncludeOrExclude(file) && !this.isIgnoredFile(file))
         res.push({
           name: this.getFileName(file),
           path: file
         })
-      }
 
       return res
     }, [])
+  }
+
+  isIgnoredFile(file) {
+    return _.some(UPLOAD_IGNORES, ignore => new RegExp(ignore).test(file))
   }
 
   isIncludeOrExclude(file) {
@@ -186,11 +232,10 @@ export default class S3Plugin {
     var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
     var progressAmount = Array(files.length)
     var progressTotal = Array(files.length)
-    var finishedUploads = []
 
     var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
-      incomplete: '-',
+      incomplete: '∆',
       total: 100
     })
 
@@ -199,6 +244,7 @@ export default class S3Plugin {
         progressTotal[i] = this.progressTotal
         progressAmount[i] = this.progressAmount
 
+        console.log('Sum of progress: ', sum(progressAmount) / sum(progressTotal).toFixed(2))
         progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2))
       })
     })
@@ -207,9 +253,6 @@ export default class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    if (fs.lstatSync(file).isDirectory())
-      return this.uploadFiles(this.filterAllowedFiles(fs.readdirSync(file)))
-
     var upload,
         s3Params = _.merge({Key: this.options.basePath + fileName}, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions)
 
