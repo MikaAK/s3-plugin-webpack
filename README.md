@@ -34,7 +34,7 @@ var config = {
       s3UploadOptions: {
         Bucket: 'MyBucket'
       },
-      cdnizerConfig: {
+      cdnizerOptions: {
         defaultCDNBase: 'http://asdf.ca'
       }
     })
@@ -72,5 +72,5 @@ var config = {
 - `basePath`: Provide the namespace where upload files on S3
 - `directory`: Provide a directory to upload (defaults to webpack output directory)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
-- `noCdnizer`: Disable cdnizer (defaults true if no cdnizerConfig passed)
-- `cdnizerConfig`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
+- `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
+- `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
