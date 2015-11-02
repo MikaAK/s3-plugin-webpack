@@ -74,3 +74,6 @@ var config = {
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
+
+### Thanks
+Thanks to @Omer for fixing credentials from `~/.aws/credentials`
