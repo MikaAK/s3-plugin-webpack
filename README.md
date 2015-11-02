@@ -76,4 +76,4 @@ var config = {
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 
 ### Thanks
-Thanks to @Omer for fixing credentials from `~/.aws/credentials`
+Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
