@@ -1,0 +1,155 @@
+{
+  "rules": {
+    "strict": [
+      2,
+      "global"
+    ],
+    "new-cap": 0,
+    "key-spacing": 0,
+    "no-trailing-spaces": 1,
+    "eol-last": 0,
+    "quote-props": [2, "as-needed"],
+    "no-return-assign": 0,
+    "no-underscore-dangle": 0,
+    "max-nested-callbacks": [
+      2,
+      4
+    ],
+    "space-unary-ops": [
+      1,
+      {
+        "words": true,
+        "nonwords": false
+      }
+    ],
+    "space-infix-ops": 2,
+    "space-in-parens": [
+      2,
+      "never"
+    ],
+    "space-before-function-paren": [
+      1,
+      "never"
+    ],
+    "space-before-blocks": [
+      1,
+      "always"
+    ],
+    "space-return-throw-case": 1,
+    "object-shorthand": [
+      2,
+      "always"
+    ],
+    "no-unused-vars": 2,
+    "no-multi-spaces": 0,
+    "operator-linebreak": [
+      2,
+      "after"
+    ],
+    "operator-assignment": [
+      2,
+      "always"
+    ],
+    "object-curly-spacing": [
+      2,
+      "never"
+    ],
+    "space-after-keywords": [
+      2,
+      "always"
+    ],
+    "no-spaced-func": 2,
+    "prefer-template": 2,
+    "prefer-const": 0,
+    "prefer-spread": 2,
+    "prefer-const": 0,
+    "one-var": [
+      2,
+      {
+        "uninitialized": "always"
+      }
+    ],
+    "curly": 0,
+    "no-console": 1,
+    "indent": [
+      2,
+      2,
+      {
+        "SwitchCase": 1,
+        "VariableDeclarator": {
+          "var": 2,
+          "let": 2,
+          "const": 3
+        }
+      }
+    ],
+    "quotes": [
+      2,
+      "single"
+    ],
+    "linebreak-style": [
+      2,
+      "unix"
+    ],
+    "semi": [
+      2,
+      "never"
+    ],
+    "no-extra-semi": 0
+  },
+  "env": {
+    "es6": true,
+    "browser": true,
+    "jquery": true
+  },
+  "ecmaFeatures": {
+    "arrowFunctions": true,
+    "blockBindings": true,
+    "classes": true,
+    "defaultParams": true,
+    "destructuring": true,
+    "forOf": false,
+    "generators": true,
+    "modules": true,
+    "objectLiteralComputedProperties": true,
+    "objectLiteralDuplicateProperties": true,
+    "objectLiteralShorthandMethods": true,
+    "objectLiteralShorthandProperties": true,
+    "octalLiterals": true,
+    "regexUFlag": true,
+    "regexYFlag": true,
+    "restParams": true,
+    "spread": true,
+    "superInFunctions": true,
+    "templateStrings": true,
+    "unicodeCodePointEscapes": true,
+    "globalReturn": false
+  },
+  "globals": {
+    "_": false,
+    "angular": false,
+    "window": false,
+    "__DEV__": false,
+    "StripeCheckout": false,
+    "__PROD__": false,
+    "__TEST__": false,
+    "document": false,
+    "delete": false,
+    "FormData": false,
+    "getComputedStyle": false,
+    "Pikaday": false,
+    "requestAnimationFrame": false,
+    "inject": false,
+    "expect": false,
+    "it": false,
+    "describe": false,
+    "protractor": false,
+    "by": false,
+    "exports": false,
+    "element": false,
+    "elements": false,
+    "browser": false,
+    "require": false
+
+  }
+}

@@ -8,6 +8,8 @@ var _createClass = (function () { function defineProperties(target, props) { for
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 
 var _http = require('http');
@@ -26,9 +28,9 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
-var _path = require('path');
+var _path2 = require('path');
 
-var _path2 = _interopRequireDefault(_path);
+var _path3 = _interopRequireDefault(_path2);
 
 var _progress = require('progress');
 
@@ -43,6 +45,8 @@ var _lodash = require('lodash');
 var _lodash2 = _interopRequireDefault(_lodash);
 
 _http2['default'].globalAgent.maxSockets = _https2['default'].globalAgent.maxSockets = 50;
+
+var UPLOAD_IGNORES = ['.DS_Store'];
 
 var DEFAULT_UPLOAD_OPTIONS = {
   ACL: 'public-read'
@@ -121,35 +125,68 @@ var S3Plugin = (function () {
           cb();
         }
 
-        if (!REQUIRED_S3_UP_OPTS) {
+        if (!hasRequiredUploadOpts) {
           compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')));
           cb();
         }
 
-        if (isDirectoryUpload) _fs2['default'].readdir(_this.options.directory, function (error, files) {
-          if (error) {
-            compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error));
-            cb();
-          } else {
-            (function () {
-              var path = /\/$/.test(_this.options.directory) ? _this.options.directory : _this.options.directory + '/';
+        if (isDirectoryUpload) {
+          var _path = /\/$/.test(_this.options.directory) ? _this.options.directory : _this.options.directory + '/';
 
-              _this.uploadFiles(_this.filterAllowedFiles(files.map(function (file) {
-                return path + file;
-              }))).then(_this.changeHtmlUrls.bind(_this)).then(function () {
-                return cb();
-              })['catch'](function (e) {
-                compilation.errors.push(new Error('S3Plugin: ' + e));
-                cb();
-              });
-            })();
-          }
-        });else _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
-          return cb();
-        })['catch'](function (e) {
-          compilation.errors.push(new Error('S3Plugin: ' + e));
-          cb();
+          _this.getAllFilesRecursive(_path).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+            return cb();
+          })['catch'](function (e) {
+            compilation.errors.push(new Error('S3Plugin: ' + e));
+            cb();
+          });
+        } else {
+          _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+            return cb();
+          })['catch'](function (e) {
+            compilation.errors.push(new Error('S3Plugin: ' + e));
+            cb();
+          });
+        }
+      });
+    }
+  }, {
+    key: 'getAllFilesRecursive',
+    value: function getAllFilesRecursive(path) {
+      return new Promise(function (resolve, reject) {
+        var results = [];
+
+        _fs2['default'].readdir(path, function (err, list) {
+          if (err) return reject(err);
+
+          var i = 0;
+
+          (function next() {
+            var file = list[i++];
+
+            if (!file) return resolve(results);
+
+            file = (path.endsWith('/') || file.startsWith('/') ? path : path + '/') + file;
+
+            _fs2['default'].stat(file, function (err, stat) {
+              if (stat && stat.isDirectory()) {
+                this.getAllFilesRecursive(file).then(function (res) {
+                  results.push.apply(results, _toConsumableArray(res));
+                  next();
+                });
+              } else {
+                results.push(file);
+                next();
+              }
+            });
+          })();
         });
+      });
+    }
+  }, {
+    key: 'addPathToFiles',
+    value: function addPathToFiles(files, fPath) {
+      return files.map(function (file) {
+        return _path3['default'].resolve(fPath, file);
       });
     }
   }, {
@@ -168,7 +205,7 @@ var S3Plugin = (function () {
       var publicPath = options.output.publicPath || options.output.path;
 
       var files = (0, _lodash2['default'])(chunks).pluck('files').flatten().map(function (file) {
-        return _path2['default'].resolve(publicPath, file);
+        return _path3['default'].resolve(publicPath, file);
       }).value();
 
       return this.filterAllowedFiles(files);
@@ -200,13 +237,11 @@ var S3Plugin = (function () {
       var _options = this.options;
       var directory = _options.directory;
       var htmlFiles = _options.htmlFiles;
-
-      var allHtml = (htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
+      var htmlFiles = htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
         return (/\.html$/.test(file)
         );
-      })).map(function (file) {
-        return _path2['default'].resolve(directory, file);
       });
+      var allHtml = this.addPathToFiles(htmlFiles, directory);
 
       this.cdnizer = (0, _cdnizer2['default'])(this.cdnizerOptions);
 
@@ -220,15 +255,20 @@ var S3Plugin = (function () {
       var _this4 = this;
 
       return files.reduce(function (res, file) {
-        if (_this4.isIncludeOrExclude(file)) {
-          res.push({
-            name: _this4.getFileName(file),
-            path: file
-          });
-        }
+        if (_this4.isIncludeOrExclude(file) && !_this4.isIgnoredFile(file)) res.push({
+          name: _this4.getFileName(file),
+          path: file
+        });
 
         return res;
       }, []);
+    }
+  }, {
+    key: 'isIgnoredFile',
+    value: function isIgnoredFile(file) {
+      return _lodash2['default'].some(UPLOAD_IGNORES, function (ignore) {
+        return new RegExp(ignore).test(file);
+      });
     }
   }, {
     key: 'isIncludeOrExclude',
@@ -269,11 +309,10 @@ var S3Plugin = (function () {
       });
       var progressAmount = Array(files.length);
       var progressTotal = Array(files.length);
-      var finishedUploads = [];
 
       var progressBar = new _progress2['default']('Uploading [:bar] :percent :etas', {
         complete: '>',
-        incomplete: '-',
+        incomplete: '∆',
         total: 100
       });
 
@@ -284,7 +323,7 @@ var S3Plugin = (function () {
           progressTotal[i] = this.progressTotal;
           progressAmount[i] = this.progressAmount;
 
-          progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2));
+          progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2));
         });
       });
 
@@ -296,8 +335,6 @@ var S3Plugin = (function () {
   }, {
     key: 'uploadFile',
     value: function uploadFile(fileName, file) {
-      if (_fs2['default'].lstatSync(file).isDirectory()) return this.uploadFiles(this.filterAllowedFiles(_fs2['default'].readdirSync(file)));
-
       var upload,
           s3Params = _lodash2['default'].merge({ Key: this.options.basePath + fileName }, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions);
 

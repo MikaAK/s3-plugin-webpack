@@ -4,7 +4,8 @@
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "dist": "rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
+    "lint": "eslint ./src ;exit 0",
+    "dist": "npm run lint && rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
     "patch": "npm run dist && npm version patch && git push && npm publish",
     "minor": "npm run dist && npm version minor && git push && npm publish"
   },
@@ -32,6 +33,7 @@
     "progress": "^1.1.8"
   },
   "devDependencies": {
-    "babel": "^5.8.21"
+    "babel": "^5.8.21",
+    "eslint": "^1.8.0"
   }
 }

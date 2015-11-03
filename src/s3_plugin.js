@@ -1,5 +1,3 @@
-'use strict'
-
 import http from 'http'
 import https from 'https'
 import s3 from 's3'
@@ -36,7 +34,7 @@ export default class S3Plugin {
     this.urlMappings = []
     this.uploadTotal = 0
     this.uploadProgress = 0
-    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
+    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
 
     this.options = {
       directory,
@@ -50,7 +48,7 @@ export default class S3Plugin {
       maxAsyncS3: 50,
       s3Options: _.merge({}, DEFAULT_S3_OPTIONS, s3Options)
     }
-    
+
     this.noCdnizer = !Object.keys(this.cdnizerOptions).length
 
     if (!this.noCdnizer && !this.cdnizerOptions.files)
@@ -69,42 +67,36 @@ export default class S3Plugin {
 
     compiler.plugin('after-emit', (compilation, cb) => {
       if (!hasRequiredOptions) {
-        compilation.errors.push(new Error('S3Plugin: Must provide ' + REQUIRED_S3_OPTS.join(', ')))
+        compilation.errors.push(new Error(`S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`))
         cb()
       }
 
       if (!hasRequiredUploadOpts) {
-        compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')))
+        compilation.errors.push(new Error(`S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`))
         cb()
       }
 
-      if (isDirectoryUpload)
-        fs.readdir(this.options.directory, (error, files) => {
-          if (error) {
-            compilation.errors.push(new Error('S3Plugin-ReadOutputDir: ' + error))
-            cb()
-          } else {
-            const path = /\/$/.test(this.options.directory) ? this.options.directory : `${this.options.directory}/`
+      if (isDirectoryUpload) {
+        const path = /\/$/.test(this.options.directory) ? this.options.directory : `${this.options.directory}/`
 
-            this.getAllFilesRecursive(path)
-              .then(this.filterAllowedFiles.bind(this))
-              .then(this.uploadFiles.bind(this))
-              .then(this.changeHtmlUrls.bind(this))
-              .then(() => cb())
-              .catch(e => {
-                compilation.errors.push(new Error('S3Plugin: ' + e))
-                cb()
-              })
-          }
-        })
-      else
+        this.getAllFilesRecursive(path)
+          .then(this.filterAllowedFiles.bind(this))
+          .then(this.uploadFiles.bind(this))
+          .then(this.changeHtmlUrls.bind(this))
+          .then(() => cb())
+          .catch(e => {
+            compilation.errors.push(new Error(`S3Plugin: ${e}`))
+            cb()
+          })
+      } else {
         this.uploadFiles(this.getAssetFiles(compilation))
           .then(this.changeHtmlUrls.bind(this))
           .then(() => cb())
           .catch(e => {
-            compilation.errors.push(new Error('S3Plugin: ' + e))
+            compilation.errors.push(new Error(`S3Plugin: ${e}`))
             cb()
           })
+      }
     })
   }
 
@@ -113,7 +105,7 @@ export default class S3Plugin {
       var results = []
 
       fs.readdir(path, function(err, list) {
-        if (err) 
+        if (err)
           return reject(err)
 
         var i = 0;
@@ -214,7 +206,7 @@ export default class S3Plugin {
         {include, exclude} = this.options
 
     isInclude = include ? include.test(file) : true
-    isExclude = exclude ? exclude.test(file) : false 
+    isExclude = exclude ? exclude.test(file) : false
 
     return isInclude && !isExclude
   }
@@ -244,8 +236,7 @@ export default class S3Plugin {
         progressTotal[i] = this.progressTotal
         progressAmount[i] = this.progressAmount
 
-        console.log('Sum of progress: ', sum(progressAmount) / sum(progressTotal).toFixed(2))
-        progressBar.update(sum(progressAmount) / sum(progressTotal).toFixed(2))
+        progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
       })
     })
 
@@ -266,9 +257,9 @@ export default class S3Plugin {
     })
 
     if (!this.noCdnizer)
-      this.cdnizerOptions.files.push('*' + fileName + '*')
+      this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    var promise = new Promise((resolve, reject) => {
+    var promise = new Promise(function(resolve, reject) {
       upload.on('error', reject)
       upload.on('end', () => resolve(file))
     })
