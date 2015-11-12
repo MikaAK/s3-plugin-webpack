@@ -7,7 +7,8 @@
     "lint": "eslint ./src ;exit 0",
     "dist": "npm run lint && rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
     "patch": "npm run dist && npm version patch && git push && npm publish",
-    "minor": "npm run dist && npm version minor && git push && npm publish"
+    "minor": "npm run dist && npm version minor && git push && npm publish",
+    "test": "JASMINE_CONFIG_PATH='spec/jasmine.json' jasmine"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,11 @@
     "progress": "^1.1.8"
   },
   "devDependencies": {
-    "babel": "^5.8.21",
-    "eslint": "^1.8.0"
+    "babel": "^5.8",
+    "dotenv": "^1.2.0",
+    "eslint": "^1.8.0",
+    "jasmine": "^2.3.2",
+    "phantomjs": "^1.9.18",
+    "webpack": "^1.12.4"
   }
 }
