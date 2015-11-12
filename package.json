@@ -5,9 +5,10 @@
   "main": "dist/s3_plugin.js",
   "scripts": {
     "lint": "eslint ./src ;exit 0",
-    "dist": "npm run lint && rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
+    "dist": "npm run lint && rm -rf dist && mkdir dist && babel --presets=es2015 src/s3_plugin.js > dist/s3_plugin.js",
     "patch": "npm run dist && npm version patch && git push && npm publish",
-    "minor": "npm run dist && npm version minor && git push && npm publish"
+    "minor": "npm run dist && npm version minor && git push && npm publish",
+    "test": "node_modules/karma-cli/bin/karma start"
   },
   "repository": {
     "type": "git",
@@ -33,7 +34,18 @@
     "progress": "^1.1.8"
   },
   "devDependencies": {
-    "babel": "^5.8.21",
-    "eslint": "^1.8.0"
+    "babel": "^6",
+    "babel-cli": "^6.1.18",
+    "babel-preset-es2015": "^6.1.18",
+    "dotenv": "^1.2.0",
+    "eslint": "^1.8.0",
+    "jasmine": "^2.3.2",
+    "karma": "^0.13.15",
+    "karma-babel-preprocessor": "^6.0.1",
+    "karma-cli": "^0.1.1",
+    "karma-jasmine": "^0.3.6",
+    "karma-phantomjs-launcher": "^0.2.1",
+    "phantomjs": "^1.9.18",
+    "webpack": "^1.12.4"
   }
 }
