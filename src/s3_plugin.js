@@ -24,6 +24,8 @@ const DEFAULT_S3_OPTIONS = {
 const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
       REQUIRED_S3_UP_OPTS = ['Bucket']
 
+const PATH_SEP = path.sep
+
 export default class S3Plugin {
   constructor(options = {}) {
     var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
@@ -77,7 +79,7 @@ export default class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        const path = /\/$/.test(this.options.directory) ? this.options.directory : `${this.options.directory}/`
+        const path = this.options.directory.endsWith(PATH_SEP) ? this.options.directory : this.options.directory + PATH_SEP
 
         this.getAllFilesRecursive(path)
           .then(this.filterAllowedFiles.bind(this))
@@ -116,7 +118,7 @@ export default class S3Plugin {
           if (!file)
             return resolve(results)
 
-          file = (path.endsWith('/') || file.startsWith('/') ? path : `${path}/`) + file
+          file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file
 
           fs.stat(file, function(err, stat) {
             if (stat && stat.isDirectory()) {
@@ -140,7 +142,7 @@ export default class S3Plugin {
   }
 
   getFileName(file = '') {
-    return file.search('/') === -1 ? file : file.match(/[^\/]+$/)[0]
+    return file.includes(PATH_SEP) ? file.substring(file.lastIndexOf(PATH_SEP) + 1) : file
   }
 
   getAssetFiles({chunks, options}) {
