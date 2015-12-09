@@ -59,6 +59,8 @@ var DEFAULT_S3_OPTIONS = {
 var REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
     REQUIRED_S3_UP_OPTS = ['Bucket'];
 
+var PATH_SEP = _path3['default'].sep;
+
 var S3Plugin = (function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -131,7 +133,7 @@ var S3Plugin = (function () {
         }
 
         if (isDirectoryUpload) {
-          var _path = /\/$/.test(_this.options.directory) ? _this.options.directory : _this.options.directory + '/';
+          var _path = _this.options.directory.endsWith(PATH_SEP) ? _this.options.directory : _this.options.directory + PATH_SEP;
 
           _this.getAllFilesRecursive(_path).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
             return cb();
@@ -165,7 +167,7 @@ var S3Plugin = (function () {
 
             if (!file) return resolve(results);
 
-            file = (path.endsWith('/') || file.startsWith('/') ? path : path + '/') + file;
+            file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file;
 
             _fs2['default'].stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
@@ -194,7 +196,7 @@ var S3Plugin = (function () {
     value: function getFileName() {
       var file = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
 
-      return file.search('/') === -1 ? file : file.match(/[^\/]+$/)[0];
+      return file.includes(PATH_SEP) ? file.substring(file.lastIndexOf(PATH_SEP) + 1) : file;
     }
   }, {
     key: 'getAssetFiles',
