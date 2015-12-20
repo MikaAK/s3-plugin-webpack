@@ -4,11 +4,11 @@
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "lint": "eslint ./src ;exit 0",
-    "dist": "npm run lint && rm -rf dist && mkdir dist && babel src/s3_plugin.js > dist/s3_plugin.js",
-    "patch": "npm run dist && npm version patch && git push && npm publish",
-    "minor": "npm run dist && npm version minor && git push && npm publish",
-    "test": "JASMINE_CONFIG_PATH='spec/jasmine.json' jasmine"
+    "build": "gulp build",
+    "dist": "",
+    "patch": "",
+    "minor": "",
+    "test": "gulp test"
   },
   "repository": {
     "type": "git",
@@ -28,17 +28,26 @@
   },
   "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
-    "s3": "^4.4.0",
     "cdnizer": "^1.1.5",
     "lodash": "^3.10.1",
-    "progress": "^1.1.8"
+    "progress": "^1.1.8",
+    "s3": "^4.4.0"
   },
   "devDependencies": {
-    "babel": "^5.8",
+    "babel-plugin-add-module-exports": "^0.1.2",
+    "babel-register": "^6.3.13",
+    "chai": "^3.4.1",
     "dotenv": "^1.2.0",
     "eslint": "^1.8.0",
-    "jasmine": "^2.3.2",
-    "phantomjs": "^1.9.18",
-    "webpack": "^1.12.4"
+    "gulp": "^3.9.0",
+    "gulp-babel": "^6.1.1",
+    "gulp-eslint": "^1.1.1",
+    "gulp-load-plugins": "^1.1.0",
+    "gulp-mocha": "^2.2.0",
+    "html-webpack-plugin": "^1.7.0",
+    "mocha": "^2.3.4",
+    "mocha-better-spec-reporter": "^3.0.1",
+    "webpack": "^1.12.9",
+    "webpack-html-plugin": "^0.1.0"
   }
 }

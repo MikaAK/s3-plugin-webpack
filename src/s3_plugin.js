@@ -24,7 +24,7 @@ const DEFAULT_S3_OPTIONS = {
 const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
       REQUIRED_S3_UP_OPTS = ['Bucket']
 
-export default class S3Plugin {
+module.exports = class S3Plugin {
   constructor(options = {}) {
     var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
 
@@ -231,14 +231,14 @@ export default class S3Plugin {
       total: 100
     })
 
-    uploadFiles.forEach(function({upload}, i) {
-      upload.on('progress', function() {
-        progressTotal[i] = this.progressTotal
-        progressAmount[i] = this.progressAmount
+    //uploadFiles.forEach(function({upload}, i) {
+      //upload.on('progress', function() {
+        //progressTotal[i] = this.progressTotal
+        //progressAmount[i] = this.progressAmount
 
-        progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
-      })
-    })
+        //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
+      //})
+    //})
 
     return Promise.all(uploadFiles.map(({promise}) => promise))
   }

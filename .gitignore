@@ -85,3 +85,4 @@ $RECYCLE.BIN/
 *.lnk
 
 .env
+test/.tmp
