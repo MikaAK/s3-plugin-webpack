@@ -1,16 +1,6 @@
 'use strict';
 
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
 
 var _http = require('http');
 
@@ -20,9 +10,9 @@ var _https = require('https');
 
 var _https2 = _interopRequireDefault(_https);
 
-var _s3 = require('s3');
+var _s = require('s3');
 
-var _s32 = _interopRequireDefault(_s3);
+var _s2 = _interopRequireDefault(_s);
 
 var _fs = require('fs');
 
@@ -44,7 +34,13 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
-_http2['default'].globalAgent.maxSockets = _https2['default'].globalAgent.maxSockets = 50;
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+_http2.default.globalAgent.maxSockets = _https2.default.globalAgent.maxSockets = 50;
 
 var UPLOAD_IGNORES = ['.DS_Store'];
 
@@ -59,9 +55,9 @@ var DEFAULT_S3_OPTIONS = {
 var REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
     REQUIRED_S3_UP_OPTS = ['Bucket'];
 
-var PATH_SEP = _path3['default'].sep;
+var PATH_SEP = _path3.default.sep;
 
-var S3Plugin = (function () {
+module.exports = (function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -69,14 +65,14 @@ var S3Plugin = (function () {
 
     var _options$s3Options = options.s3Options;
     var s3Options = _options$s3Options === undefined ? {} : _options$s3Options;
-    var _options$s3UploadOptions = options.s3UploadOptions;
-    var s3UploadOptions = _options$s3UploadOptions === undefined ? {} : _options$s3UploadOptions;
+    var _options$s3UploadOpti = options.s3UploadOptions;
+    var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
     var directory = options.directory;
     var include = options.include;
     var exclude = options.exclude;
     var basePath = options.basePath;
-    var _options$cdnizerOptions = options.cdnizerOptions;
-    var cdnizerOptions = _options$cdnizerOptions === undefined ? {} : _options$cdnizerOptions;
+    var _options$cdnizerOptio = options.cdnizerOptions;
+    var cdnizerOptions = _options$cdnizerOptio === undefined ? {} : _options$cdnizerOptio;
     var htmlFiles = options.htmlFiles;
 
     this.uploadOptions = s3UploadOptions;
@@ -97,7 +93,7 @@ var S3Plugin = (function () {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _lodash2['default'].merge({}, DEFAULT_S3_OPTIONS, s3Options)
+      s3Options: _lodash2.default.merge({}, DEFAULT_S3_OPTIONS, s3Options)
     };
 
     this.noCdnizer = !Object.keys(this.cdnizerOptions).length;
@@ -137,14 +133,14 @@ var S3Plugin = (function () {
 
           _this.getAllFilesRecursive(_path).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
             return cb();
-          })['catch'](function (e) {
+          }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
             cb();
           });
         } else {
           _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
             return cb();
-          })['catch'](function (e) {
+          }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
             cb();
           });
@@ -157,7 +153,7 @@ var S3Plugin = (function () {
       return new Promise(function (resolve, reject) {
         var results = [];
 
-        _fs2['default'].readdir(path, function (err, list) {
+        _fs2.default.readdir(path, function (err, list) {
           if (err) return reject(err);
 
           var i = 0;
@@ -169,7 +165,7 @@ var S3Plugin = (function () {
 
             file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file;
 
-            _fs2['default'].stat(file, function (err, stat) {
+            _fs2.default.stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
                 this.getAllFilesRecursive(file).then(function (res) {
                   results.push.apply(results, _toConsumableArray(res));
@@ -188,7 +184,7 @@ var S3Plugin = (function () {
     key: 'addPathToFiles',
     value: function addPathToFiles(files, fPath) {
       return files.map(function (file) {
-        return _path3['default'].resolve(fPath, file);
+        return _path3.default.resolve(fPath, file);
       });
     }
   }, {
@@ -206,8 +202,8 @@ var S3Plugin = (function () {
 
       var publicPath = options.output.publicPath || options.output.path;
 
-      var files = (0, _lodash2['default'])(chunks).pluck('files').flatten().map(function (file) {
-        return _path3['default'].resolve(publicPath, file);
+      var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (file) {
+        return _path3.default.resolve(publicPath, file);
       }).value();
 
       return this.filterAllowedFiles(files);
@@ -218,10 +214,10 @@ var S3Plugin = (function () {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
-        _fs2['default'].readFile(htmlPath, function (err, data) {
+        _fs2.default.readFile(htmlPath, function (err, data) {
           if (err) return reject(err);
 
-          _fs2['default'].writeFile(htmlPath, _this2.cdnizer(data.toString()), function (err) {
+          _fs2.default.writeFile(htmlPath, _this2.cdnizer(data.toString()), function (err) {
             if (err) return reject(err);
 
             resolve();
@@ -239,13 +235,13 @@ var S3Plugin = (function () {
       var _options = this.options;
       var directory = _options.directory;
       var htmlFiles = _options.htmlFiles;
-      var htmlFiles = htmlFiles || _fs2['default'].readdirSync(directory).filter(function (file) {
+      var htmlFiles = htmlFiles || _fs2.default.readdirSync(directory).filter(function (file) {
         return (/\.html$/.test(file)
         );
       });
       var allHtml = this.addPathToFiles(htmlFiles, directory);
 
-      this.cdnizer = (0, _cdnizer2['default'])(this.cdnizerOptions);
+      this.cdnizer = (0, _cdnizer2.default)(this.cdnizerOptions);
 
       return Promise.all(allHtml.map(function (file) {
         return _this3.cdnizeHtml(file);
@@ -268,7 +264,7 @@ var S3Plugin = (function () {
   }, {
     key: 'isIgnoredFile',
     value: function isIgnoredFile(file) {
-      return _lodash2['default'].some(UPLOAD_IGNORES, function (ignore) {
+      return _lodash2.default.some(UPLOAD_IGNORES, function (ignore) {
         return new RegExp(ignore).test(file);
       });
     }
@@ -291,7 +287,7 @@ var S3Plugin = (function () {
     value: function connect() {
       if (this.isConnected) return;
 
-      this.client = _s32['default'].createClient(this.clientConfig);
+      this.client = _s2.default.createClient(this.clientConfig);
       this.isConnected = true;
     }
   }, {
@@ -312,25 +308,23 @@ var S3Plugin = (function () {
       var progressAmount = Array(files.length);
       var progressTotal = Array(files.length);
 
-      var progressBar = new _progress2['default']('Uploading [:bar] :percent :etas', {
+      var progressBar = new _progress2.default('Uploading [:bar] :percent :etas', {
         complete: '>',
         incomplete: '∆',
         total: 100
       });
 
-      uploadFiles.forEach(function (_ref2, i) {
-        var upload = _ref2.upload;
+      //uploadFiles.forEach(function({upload}, i) {
+      //upload.on('progress', function() {
+      //progressTotal[i] = this.progressTotal
+      //progressAmount[i] = this.progressAmount
 
-        upload.on('progress', function () {
-          progressTotal[i] = this.progressTotal;
-          progressAmount[i] = this.progressAmount;
+      //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
+      //})
+      //})
 
-          progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2));
-        });
-      });
-
-      return Promise.all(uploadFiles.map(function (_ref3) {
-        var promise = _ref3.promise;
+      return Promise.all(uploadFiles.map(function (_ref2) {
+        var promise = _ref2.promise;
         return promise;
       }));
     }
@@ -338,7 +332,7 @@ var S3Plugin = (function () {
     key: 'uploadFile',
     value: function uploadFile(fileName, file) {
       var upload,
-          s3Params = _lodash2['default'].merge({ Key: this.options.basePath + fileName }, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions);
+          s3Params = _lodash2.default.merge({ Key: this.options.basePath + fileName }, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions);
 
       // Remove Gzip from encoding if ico
       if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
@@ -363,7 +357,3 @@ var S3Plugin = (function () {
 
   return S3Plugin;
 })();
-
-exports['default'] = S3Plugin;
-module.exports = exports['default'];
-

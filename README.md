@@ -1,3 +1,4 @@
+
 S3 Plugin
 ===
 [![Stories in Ready](https://badge.waffle.io/MikaAK/s3-plugin-webpack.png?label=ready&title=Ready)](https://waffle.io/MikaAK/s3-plugin-webpack)
@@ -76,5 +77,14 @@ var config = {
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 
+### Contributing
+All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
+
+##### Commands to be aware of
+###### **WARNING**: The test sweet generates random files for certain checks. Ensure you delete files leftover on your Bucket.
+`npm run test` - Run test suit (You must have the .env file setup)
+`npm run build` - Run build
+
 ### Thanks
 Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
+Thanks to [@lostjimmy](https://github.com/lostjimmy) for pointing out `path.sep` for Windows compatibility
