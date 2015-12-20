@@ -47,7 +47,6 @@
     "html-webpack-plugin": "^1.7.0",
     "mocha": "^2.3.4",
     "mocha-better-spec-reporter": "^3.0.1",
-    "webpack": "^1.12.9",
-    "webpack-html-plugin": "^0.1.0"
+    "webpack": "^1.12.9"
   }
 }
