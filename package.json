@@ -8,8 +8,7 @@
     "test": "gulp test",
     "prep:major": "gulp && npm version major",
     "prep:minor": "gulp && npm version minor",
-    "prep:patch": "gulp && npm version patch",
-    "release": "gulp && npm publish"
+    "prep:patch": "gulp && npm version patch"
   },
   "repository": {
     "type": "git",
