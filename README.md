@@ -81,7 +81,7 @@ var config = {
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
 
 ##### Commands to be aware of
-###### **WARNING**: The test suit will wipe all files on the amazon bucket due to the high amount of files it creates for randomness with test
+###### **WARNING**: The test sweet generates random files for certain checks. Ensure you delete files leftover on your Bucket.
 `npm run test` - Run test suit (You must have the .env file setup)
 `npm run build` - Run build
 

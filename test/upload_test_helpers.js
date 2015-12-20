@@ -2,34 +2,21 @@ import _ from 'lodash'
 import https from 'https'
 import path from 'path'
 import webpack from 'webpack'
-import dotenv from 'dotenv'
 import fs from 'fs'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
+import s3Opts from './s3_options'
 import S3WebpackPlugin from '../src/s3_plugin'
 import {assert} from 'chai'
 
-dotenv.load()
-
-const {
-  AWS_BUCKET,
-  AWS_REGION,
-  AWS_ACCESS_KEY,
-  AWS_SECRET_ACCESS_KEY
-} = process.env
-
-const S3_URL = `https://s3-${AWS_REGION}.amazonaws.com/${AWS_BUCKET}/`,
+const S3_URL = `https://s3-${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
       S3_ERROR_REGEX = /<Error>/,
       OUTPUT_FILE_NAME = 's3Test',
       OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
       ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js')
 
-var extractCodeFromS3Html = function(html) {
-  return /<pre .*>(.*)<\/pre>/gs.match(html)
-}
-
 var deleteFolderRecursive = function(path) {
   if (fs.existsSync(path)) {
-    fs.readdirSync(path).forEach(function(file,index) {
+    fs.readdirSync(path).forEach(function(file) {
       var curPath = `${path}/${file}`
 
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
@@ -45,14 +32,8 @@ var deleteFolderRecursive = function(path) {
 
 var generateS3Config = function(config) {
   var params = _.merge(config || {}, {
-    s3Options: {
-      accessKeyId: AWS_ACCESS_KEY,
-      secretAccessKey: AWS_SECRET_ACCESS_KEY,
-      region: AWS_REGION
-    },
-    s3UploadOptions: {
-      Bucket: AWS_BUCKET
-    }
+    s3Options: s3Opts.s3Options,
+    s3UploadOptions: s3Opts.s3Params
   })
 
   return new S3WebpackPlugin(params)
@@ -64,7 +45,7 @@ export default {
   S3_URL,
   S3_ERROR_REGEX,
 
-  fetch: function(url) {
+  fetch(url) {
     return new Promise(function(resolve, reject) {
       https.get(url, function(response) {
         var body = ''
@@ -117,10 +98,10 @@ export default {
     }, config)
   },
 
-  runWebpackConfig({config, s3Config}) {
+  runWebpackConfig({config}) {
     this.createOutputPath()
 
-    return new Promise(function(resolve, reject) {
+    return new Promise(function(resolve) {
       webpack(config, function(err, stats) {
         if (stats.toJson().errors.length)
           resolve({errors: stats.toJson().errors})
@@ -142,7 +123,7 @@ export default {
     var fetchFiles = files
       .filter(file => !/.*\.html$/.test(file))
 
-    return Promise.all(fetchFiles.map(file => this.fetch(S3_URL + file))) 
+    return Promise.all(fetchFiles.map(file => this.fetch(S3_URL + file)))
       .then(nFiles => nFiles.map((file, i) => {
         return {
           name: fetchFiles[i],
