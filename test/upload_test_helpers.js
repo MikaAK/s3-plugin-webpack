@@ -7,12 +7,14 @@ import HtmlWebpackPlugin from 'html-webpack-plugin'
 import s3Opts from './s3_options'
 import S3WebpackPlugin from '../src/s3_plugin'
 import {assert} from 'chai'
+import {spawnSync} from 'child_process'
 
 const S3_URL = `https://s3-${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
       S3_ERROR_REGEX = /<Error>/,
       OUTPUT_FILE_NAME = 's3Test',
       OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
-      ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js')
+      ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
+      BUILD_FAIL_ERROR = 'Webpack Build Failed'
 
 var deleteFolderRecursive = function(path) {
   if (fs.existsSync(path)) {
@@ -57,11 +59,26 @@ export default {
     })
   },
 
+  createFolder(pathToFolder) {
+    spawnSync('mkdir', ['-p', pathToFolder], {stdio: 'inherit'})
+  },
+
   testForFailFromStatsOrGetS3Files({errors, stats}) {
     if (errors)
-      return assert.fail([], errors, 'Webpack Build Failed')
+      return assert.fail([], errors, BUILD_FAIL_ERROR)
 
     return this.getBuildFilesFromS3(this.getFilesFromStats(stats))
+  },
+
+  testForFailFromDirectoryOrGetS3Files(directory) {
+    return ({errors}) => {
+      var basePath = `${directory}${path.sep}`
+
+      if (errors)
+        return assert.fail([], errors, BUILD_FAIL_ERROR)
+      else
+        return this.getBuildFilesFromS3(this.getFilesFromDirectory(directory, basePath))
+    }
   },
 
   cleanOutputDirectory() {
@@ -111,8 +128,23 @@ export default {
     })
   },
 
-  getFilesFromDirectory(directory) {
-    return fs.readdirSync(directory)
+  getFilesFromDirectory(directory, basePath) {
+    var res = (function readDirectory(dir) {
+      return fs.readdirSync(dir)
+        .reduce(function(res, file) {
+          var fPath = path.resolve(dir, file)
+
+          if (fs.lstatSync(fPath).isDirectory())
+            res.push(...readDirectory(fPath))
+          else
+            res.push(fPath)
+
+          return res
+        }, [])
+    }).call(this, directory)
+
+    return res
+      .map(file => file.replace(basePath, ''))
   },
 
   getFilesFromStats(stats) {
@@ -127,6 +159,7 @@ export default {
       .then(nFiles => nFiles.map((file, i) => {
         return {
           name: fetchFiles[i],
+          s3Url: S3_URL + fetchFiles[i],
           actual: file,
           expected: this.readFileFromOutputDir(fetchFiles[i])
         }
@@ -139,7 +172,7 @@ export default {
 
   assertFileMatches(files) {
     var errors = _(files)
-      .map(({expected, actual, name}) => assert.equal(actual, expected, `File - ${name} - doesn't match`))
+      .map(({expected, actual, name, s3Url}) => assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`))
       .compact()
       .value()
 

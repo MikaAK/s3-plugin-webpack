@@ -106,7 +106,7 @@ module.exports = class S3Plugin {
     return new Promise((resolve, reject) => {
       var results = []
 
-      fs.readdir(path, function(err, list) {
+      fs.readdir(path, (err, list) => {
         if (err)
           return reject(err)
 
@@ -120,7 +120,7 @@ module.exports = class S3Plugin {
 
           file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file
 
-          fs.stat(file, function(err, stat) {
+          fs.stat(file, (err, stat) => {
             if (stat && stat.isDirectory()) {
               this.getAllFilesRecursive(file)
                 .then((res) => {
@@ -132,7 +132,7 @@ module.exports = class S3Plugin {
               next()
             }
           })
-        })()
+        }).call(this)
       })
     })
   }

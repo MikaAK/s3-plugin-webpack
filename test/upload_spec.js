@@ -4,7 +4,6 @@ import testHelpers from './upload_test_helpers'
 import {assert} from 'chai'
 
 const CONTEXT = __dirname
-const BUILD_FAIL_ERROR = 'Webpack Build Failed'
 
 var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
     testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers)
@@ -15,20 +14,31 @@ var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
 describe('S3 Webpack Upload', function() {
   before(testHelpers.cleanOutputDirectory)
   describe('With directory', function() {
-    it('uploads entire directory to s3', function() {
-      var s3Config = {directory: path.resolve(CONTEXT, '.tmp')},
-          config = testHelpers.createWebpackConfig({s3Config})
+    var s3Config,
+        config
+
+    beforeEach(function() {
+      s3Config = {directory: path.resolve(CONTEXT, '.tmp')}
+      config = testHelpers.createWebpackConfig({s3Config})
 
       testHelpers.createOutputPath()
       testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
+    })
+
+    it('uploads entire directory to s3', function() {
+      return testHelpers.runWebpackConfig({config, s3Config})
+        .then(testHelpers.testForFailFromDirectoryOrGetS3Files(testHelpers.OUTPUT_PATH))
+        .then(assertFileMatches)
+    })
+
+    it('uploads directory recursivly to s3', function() {
+      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
 
       return testHelpers.runWebpackConfig({config, s3Config})
-        .then(({errors}) => {
-          if (errors)
-            return assert.fail([], errors, BUILD_FAIL_ERROR)
-          else
-            return testHelpers.getBuildFilesFromS3(testHelpers.getFilesFromDirectory(testHelpers.OUTPUT_PATH))
-        })
+        .then(testHelpers.testForFailFromDirectoryOrGetS3Files(testHelpers.OUTPUT_PATH))
         .then(assertFileMatches)
     })
   })
