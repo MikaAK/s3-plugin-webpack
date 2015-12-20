@@ -1,14 +1,14 @@
 {
   "name": "webpack-s3-plugin",
-  "version": "0.5.1",
+  "version": "0.5.2",
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "build": "gulp build",
-    "dist": "",
-    "patch": "",
-    "minor": "",
-    "test": "gulp test"
+    "build": "gulp",
+    "test": "gulp test",
+    "prep:major": "gulp && npm version major",
+    "prep:minor": "gulp && npm version minor",
+    "prep:patch": "gulp && npm version patch"
   },
   "repository": {
     "type": "git",

@@ -76,5 +76,12 @@ var config = {
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 
+### Contributing
+All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
+
+##### Commands to be aware of
+`npm run test` - Run test suit (You must have the .env file setup)
+`npm run build` - Run build
+
 ### Thanks
 Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
