@@ -35,6 +35,7 @@
   },
   "devDependencies": {
     "babel-plugin-add-module-exports": "^0.1.2",
+    "babel-preset-es2015": "^6.3.13",
     "babel-register": "^6.3.13",
     "chai": "^3.4.1",
     "dotenv": "^1.2.0",
