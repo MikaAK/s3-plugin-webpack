@@ -3,6 +3,8 @@ import loadPlugins from 'gulp-load-plugins'
 
 var $ = loadPlugins()
 
+gulp.task('default', ['test', 'build'])
+
 gulp.task('test', function() {
   return gulp.src('test/**/*_spec.js', {read: false})
     .pipe($.mocha({reporter: 'mocha-better-spec-reporter'}))

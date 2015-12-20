@@ -4,11 +4,12 @@
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "build": "gulp build",
-    "dist": "",
-    "patch": "",
-    "minor": "",
-    "test": "gulp test"
+    "build": "gulp",
+    "test": "gulp test",
+    "prep:major": "gulp && npm version major",
+    "prep:minor": "gulp && npm version minor",
+    "prep:patch": "gulp && npm version patch",
+    "release": "gulp && npm publish"
   },
   "repository": {
     "type": "git",

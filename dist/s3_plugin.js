@@ -312,19 +312,17 @@ module.exports = (function () {
         total: 100
       });
 
-      uploadFiles.forEach(function (_ref2, i) {
-        var upload = _ref2.upload;
+      //uploadFiles.forEach(function({upload}, i) {
+      //upload.on('progress', function() {
+      //progressTotal[i] = this.progressTotal
+      //progressAmount[i] = this.progressAmount
 
-        upload.on('progress', function () {
-          progressTotal[i] = this.progressTotal;
-          progressAmount[i] = this.progressAmount;
+      //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
+      //})
+      //})
 
-          progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2));
-        });
-      });
-
-      return Promise.all(uploadFiles.map(function (_ref3) {
-        var promise = _ref3.promise;
+      return Promise.all(uploadFiles.map(function (_ref2) {
+        var promise = _ref2.promise;
         return promise;
       }));
     }
