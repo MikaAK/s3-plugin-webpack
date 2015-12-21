@@ -18,9 +18,9 @@ var _fs = require('fs');
 
 var _fs2 = _interopRequireDefault(_fs);
 
-var _path2 = require('path');
+var _path = require('path');
 
-var _path3 = _interopRequireDefault(_path2);
+var _path2 = _interopRequireDefault(_path);
 
 var _progress = require('progress');
 
@@ -55,7 +55,7 @@ var DEFAULT_S3_OPTIONS = {
 var REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
     REQUIRED_S3_UP_OPTS = ['Bucket'];
 
-var PATH_SEP = _path3.default.sep;
+var PATH_SEP = _path2.default.sep;
 
 module.exports = (function () {
   function S3Plugin() {
@@ -129,9 +129,8 @@ module.exports = (function () {
         }
 
         if (isDirectoryUpload) {
-          var _path = _this.options.directory.endsWith(PATH_SEP) ? _this.options.directory : _this.options.directory + PATH_SEP;
-
-          _this.getAllFilesRecursive(_path).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+          var dPath = _this.addSeperatorToPath(_this.options.directory);
+          _this.getAllFilesRecursive(dPath).then(_this.filterPathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -148,8 +147,27 @@ module.exports = (function () {
       });
     }
   }, {
+    key: 'filterPathFromFiles',
+    value: function filterPathFromFiles(path) {
+      return function (files) {
+        return files.map(function (file) {
+          return {
+            path: file,
+            name: file.replace(path, '')
+          };
+        });
+      };
+    }
+  }, {
+    key: 'addSeperatorToPath',
+    value: function addSeperatorToPath(path) {
+      return path.endsWith(PATH_SEP) ? path : path + PATH_SEP;
+    }
+  }, {
     key: 'getAllFilesRecursive',
     value: function getAllFilesRecursive(path) {
+      var _this3 = this;
+
       return new Promise(function (resolve, reject) {
         var results = [];
 
@@ -159,6 +177,8 @@ module.exports = (function () {
           var i = 0;
 
           (function next() {
+            var _this2 = this;
+
             var file = list[i++];
 
             if (!file) return resolve(results);
@@ -167,7 +187,7 @@ module.exports = (function () {
 
             _fs2.default.stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
-                this.getAllFilesRecursive(file).then(function (res) {
+                _this2.getAllFilesRecursive(file).then(function (res) {
                   results.push.apply(results, _toConsumableArray(res));
                   next();
                 });
@@ -176,7 +196,7 @@ module.exports = (function () {
                 next();
               }
             });
-          })();
+          }).call(_this3);
         });
       });
     }
@@ -184,7 +204,7 @@ module.exports = (function () {
     key: 'addPathToFiles',
     value: function addPathToFiles(files, fPath) {
       return files.map(function (file) {
-        return _path3.default.resolve(fPath, file);
+        return _path2.default.resolve(fPath, file);
       });
     }
   }, {
@@ -202,8 +222,8 @@ module.exports = (function () {
 
       var publicPath = options.output.publicPath || options.output.path;
 
-      var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (file) {
-        return _path3.default.resolve(publicPath, file);
+      var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (name) {
+        return { path: _path2.default.resolve(publicPath, name), name: name };
       }).value();
 
       return this.filterAllowedFiles(files);
@@ -211,13 +231,13 @@ module.exports = (function () {
   }, {
     key: 'cdnizeHtml',
     value: function cdnizeHtml(htmlPath) {
-      var _this2 = this;
+      var _this4 = this;
 
       return new Promise(function (resolve, reject) {
         _fs2.default.readFile(htmlPath, function (err, data) {
           if (err) return reject(err);
 
-          _fs2.default.writeFile(htmlPath, _this2.cdnizer(data.toString()), function (err) {
+          _fs2.default.writeFile(htmlPath, _this4.cdnizer(data.toString()), function (err) {
             if (err) return reject(err);
 
             resolve();
@@ -228,35 +248,35 @@ module.exports = (function () {
   }, {
     key: 'changeHtmlUrls',
     value: function changeHtmlUrls() {
-      var _this3 = this;
+      var _this5 = this;
 
       if (this.noCdnizer) return Promise.resolve();
 
+      var allHtml;
       var _options = this.options;
       var directory = _options.directory;
       var htmlFiles = _options.htmlFiles;
-      var htmlFiles = htmlFiles || _fs2.default.readdirSync(directory).filter(function (file) {
+
+      htmlFiles = htmlFiles || _fs2.default.readdirSync(directory).filter(function (file) {
         return (/\.html$/.test(file)
         );
       });
-      var allHtml = this.addPathToFiles(htmlFiles, directory);
+
+      allHtml = this.addPathToFiles(htmlFiles, directory);
 
       this.cdnizer = (0, _cdnizer2.default)(this.cdnizerOptions);
 
       return Promise.all(allHtml.map(function (file) {
-        return _this3.cdnizeHtml(file);
+        return _this5.cdnizeHtml(file);
       }));
     }
   }, {
     key: 'filterAllowedFiles',
     value: function filterAllowedFiles(files) {
-      var _this4 = this;
+      var _this6 = this;
 
       return files.reduce(function (res, file) {
-        if (_this4.isIncludeOrExclude(file) && !_this4.isIgnoredFile(file)) res.push({
-          name: _this4.getFileName(file),
-          path: file
-        });
+        if (_this6.isIncludeAndNotExclude(file.name) && !_this6.isIgnoredFile(file.name)) res.push(file);
 
         return res;
       }, []);
@@ -269,8 +289,8 @@ module.exports = (function () {
       });
     }
   }, {
-    key: 'isIncludeOrExclude',
-    value: function isIncludeOrExclude(file) {
+    key: 'isIncludeAndNotExclude',
+    value: function isIncludeAndNotExclude(file) {
       var isExclude;
       var isInclude;
       var _options2 = this.options;
@@ -293,7 +313,7 @@ module.exports = (function () {
   }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this5 = this;
+      var _this7 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
@@ -303,7 +323,7 @@ module.exports = (function () {
         }, 0);
       };
       var uploadFiles = files.map(function (file) {
-        return _this5.uploadFile(file.name, file.path);
+        return _this7.uploadFile(file.name, file.path);
       });
       var progressAmount = Array(files.length);
       var progressTotal = Array(files.length);
