@@ -22,9 +22,8 @@ const DEFAULT_S3_OPTIONS = {
 }
 
 const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
-      REQUIRED_S3_UP_OPTS = ['Bucket']
-
-const PATH_SEP = path.sep
+      REQUIRED_S3_UP_OPTS = ['Bucket'],
+      PATH_SEP = path.sep
 
 module.exports = class S3Plugin {
   constructor(options = {}) {
