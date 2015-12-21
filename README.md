@@ -87,5 +87,6 @@ All contributions are welcome. Please make a pull request and make sure things s
 `npm run build` - Run build
 
 ### Thanks
-Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
-Thanks to [@lostjimmy](https://github.com/lostjimmy) for pointing out `path.sep` for Windows compatibility
+
+- Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
+- Thanks to [@lostjimmy](https://github.com/lostjimmy) for pointing out `path.sep` for Windows compatibility
