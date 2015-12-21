@@ -79,9 +79,9 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        const path = this.options.directory.endsWith(PATH_SEP) ? this.options.directory : this.options.directory + PATH_SEP
-
-        this.getAllFilesRecursive(path)
+        let dPath = this.addSeperatorToPath(this.options.directory)
+        this.getAllFilesRecursive(dPath)
+          .then(this.filterPathFromFiles(dPath))
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
           .then(this.changeHtmlUrls.bind(this))
@@ -100,6 +100,21 @@ module.exports = class S3Plugin {
           })
       }
     })
+  }
+
+  filterPathFromFiles(path) {
+    return function(files) {
+      return files.map(function(file) {
+        return {
+          path: file,
+          name: file.replace(path, '')
+        }
+      })
+    }
+  }
+
+  addSeperatorToPath(path) {
+    return path.endsWith(PATH_SEP) ? path : path + PATH_SEP
   }
 
   getAllFilesRecursive(path) {
@@ -151,7 +166,7 @@ module.exports = class S3Plugin {
     var files = _(chunks)
       .pluck('files')
       .flatten()
-      .map(file => path.resolve(publicPath, file))
+      .map(name => ({path: path.resolve(publicPath, name), name}))
       .value()
 
     return this.filterAllowedFiles(files)
@@ -177,9 +192,12 @@ module.exports = class S3Plugin {
     if (this.noCdnizer)
       return Promise.resolve()
 
-    var {directory, htmlFiles} = this.options,
-        htmlFiles = htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file)),
-        allHtml = this.addPathToFiles(htmlFiles, directory)
+    var allHtml,
+        {directory, htmlFiles} = this.options
+
+    htmlFiles = htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file))
+
+    allHtml = this.addPathToFiles(htmlFiles, directory)
 
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
@@ -188,11 +206,8 @@ module.exports = class S3Plugin {
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
-      if (this.isIncludeOrExclude(file) && !this.isIgnoredFile(file))
-        res.push({
-          name: this.getFileName(file),
-          path: file
-        })
+      if (this.isIncludeAndNotExclude(file.name) && !this.isIgnoredFile(file.name))
+        res.push(file)
 
       return res
     }, [])
@@ -202,7 +217,7 @@ module.exports = class S3Plugin {
     return _.some(UPLOAD_IGNORES, ignore => new RegExp(ignore).test(file))
   }
 
-  isIncludeOrExclude(file) {
+  isIncludeAndNotExclude(file) {
     var isExclude,
         isInclude,
         {include, exclude} = this.options

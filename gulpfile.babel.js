@@ -6,7 +6,7 @@ var $ = loadPlugins()
 gulp.task('default', ['test', 'build'])
 
 gulp.task('test', function() {
-  return gulp.src('test/**/*_spec.js', {read: false})
+  return gulp.src('test/**/*_test.js', {read: false})
     .pipe($.mocha({reporter: 'mocha-better-spec-reporter'}))
 })
 
@@ -15,4 +15,11 @@ gulp.task('build', function() {
     .pipe($.eslint())
     .pipe($.babel())
     .pipe(gulp.dest('dist'))
+})
+
+gulp.task('watch', function() {
+  return gulp.watch(['src/*.js', 'test/upload_test*'], ['test'])
+    /* eslint-disable */
+    .on('error', console.log.bind(console))
+    /* eslint-enable */
 })
