@@ -6,6 +6,7 @@
   "scripts": {
     "build": "gulp",
     "test": "gulp test",
+    "watch": "gulp watch",
     "prep:major": "gulp && npm version major",
     "prep:minor": "gulp && npm version minor",
     "prep:patch": "gulp && npm version patch"

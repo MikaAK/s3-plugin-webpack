@@ -12,7 +12,7 @@ var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
 // I had to use a resolve for the error instead of reject
 // because it would fire if an assertion failed in a .then
 describe('S3 Webpack Upload', function() {
-  before(testHelpers.cleanOutputDirectory)
+  beforeEach(testHelpers.cleanOutputDirectory)
   describe('With directory', function() {
     var s3Config,
         config
@@ -103,7 +103,10 @@ describe('S3 Webpack Upload', function() {
       })
       .then(files => Promise.resolve(files.filter(name => /.*\.html$/.test(name))))
       .then(function([htmlFile]) {
-        assert.match(testHelpers.readFileFromOutputDir(htmlFile), new RegExp(testHelpers.S3_URL, 'gi'), `Url not changed to ${testHelpers.S3_URL}`)
+        var outputFile = testHelpers.readFileFromOutputDir(htmlFile),
+            s3UrlRegex = new RegExp(testHelpers.S3_URL, 'gi')
+
+        return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`)
       })
   })
 })
