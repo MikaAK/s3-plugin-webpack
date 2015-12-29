@@ -59,6 +59,24 @@ describe('S3 Webpack Upload', function() {
     })
   })
 
+  it('starts a CloudFront invalidation', function() {
+    var randomFile
+
+    var s3Config = {
+      cloudfrontInvalidateOptions: testHelpers.getCloudfrontInvalidateOptions()
+    }
+    var config = testHelpers.createWebpackConfig({s3Config})
+
+    testHelpers.createOutputPath()
+    randomFile = testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForFailFromStatsOrGetS3Files)
+      .then(assertFileMatches)
+      .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
+      .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+  })
+
   it('excludes files from `exclude` property', function() {
     testHelpers.createOutputPath()
 
