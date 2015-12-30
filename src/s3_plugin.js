@@ -6,6 +6,7 @@ import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
+import aws from 'aws-sdk'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
@@ -22,14 +23,16 @@ const DEFAULT_S3_OPTIONS = {
 }
 
 const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
-      REQUIRED_S3_UP_OPTS = ['Bucket'],
-      PATH_SEP = path.sep
+      REQUIRED_S3_UP_OPTS = ['Bucket']
+
+const PATH_SEP = path.sep
 
 module.exports = class S3Plugin {
   constructor(options = {}) {
-    var {s3Options = {}, s3UploadOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
+    var {s3Options = {}, s3UploadOptions = {}, cloudfrontInvalidateOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
 
     this.uploadOptions = s3UploadOptions
+    this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
     this.isConnected = false
     this.cdnizerOptions = cdnizerOptions
     this.urlMappings = []
@@ -84,6 +87,7 @@ module.exports = class S3Plugin {
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
           .then(this.changeHtmlUrls.bind(this))
+          .then(this.invalidateCloudfront.bind(this))
           .then(() => cb())
           .catch(e => {
             compilation.errors.push(new Error(`S3Plugin: ${e}`))
@@ -92,6 +96,7 @@ module.exports = class S3Plugin {
       } else {
         this.uploadFiles(this.getAssetFiles(compilation))
           .then(this.changeHtmlUrls.bind(this))
+          .then(this.invalidateCloudfront.bind(this))
           .then(() => cb())
           .catch(e => {
             compilation.errors.push(new Error(`S3Plugin: ${e}`))
@@ -281,5 +286,39 @@ module.exports = class S3Plugin {
     })
 
     return {upload, promise}
+  }
+
+  invalidateCloudfront() {
+    var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions
+    var clientConfig = this.clientConfig
+
+    return new Promise(function(resolve, reject) {
+      if (cloudfrontInvalidateOptions.DistributionId != undefined) {
+        var cloudfront = new aws.CloudFront()
+        cloudfront.config.update({
+          accessKeyId: clientConfig.s3Options.accessKeyId,
+          secretAccessKey: clientConfig.s3Options.secretAccessKey,
+        })
+
+        cloudfront.createInvalidation({
+          DistributionId: cloudfrontInvalidateOptions.DistributionId,
+          InvalidationBatch: {
+            CallerReference: Date.now().toString(),
+            Paths: {
+              Quantity: cloudfrontInvalidateOptions.Items.length,
+              Items: cloudfrontInvalidateOptions.Items
+            }
+          }
+        }, function (err, res) {
+          if (err) {
+            return reject(err)
+          }
+          return resolve(res.Id)
+        })
+      }
+      else {
+        return resolve(null)
+      }
+    })
   }
 }

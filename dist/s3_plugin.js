@@ -34,6 +34,10 @@ var _lodash = require('lodash');
 
 var _lodash2 = _interopRequireDefault(_lodash);
 
+var _awsSdk = require('aws-sdk');
+
+var _awsSdk2 = _interopRequireDefault(_awsSdk);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -67,6 +71,8 @@ module.exports = (function () {
     var s3Options = _options$s3Options === undefined ? {} : _options$s3Options;
     var _options$s3UploadOpti = options.s3UploadOptions;
     var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
+    var _options$cloudfrontIn = options.cloudfrontInvalidateOptions;
+    var cloudfrontInvalidateOptions = _options$cloudfrontIn === undefined ? {} : _options$cloudfrontIn;
     var directory = options.directory;
     var include = options.include;
     var exclude = options.exclude;
@@ -76,6 +82,7 @@ module.exports = (function () {
     var htmlFiles = options.htmlFiles;
 
     this.uploadOptions = s3UploadOptions;
+    this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
     this.isConnected = false;
     this.cdnizerOptions = cdnizerOptions;
     this.urlMappings = [];
@@ -130,14 +137,14 @@ module.exports = (function () {
 
         if (isDirectoryUpload) {
           var dPath = _this.addSeperatorToPath(_this.options.directory);
-          _this.getAllFilesRecursive(dPath).then(_this.filterPathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+          _this.getAllFilesRecursive(dPath).then(_this.filterPathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
             cb();
           });
         } else {
-          _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(function () {
+          _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -372,6 +379,40 @@ module.exports = (function () {
       });
 
       return { upload: upload, promise: promise };
+    }
+  }, {
+    key: 'invalidateCloudfront',
+    value: function invalidateCloudfront() {
+      var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions;
+      var clientConfig = this.clientConfig;
+
+      return new Promise(function (resolve, reject) {
+        if (cloudfrontInvalidateOptions.DistributionId != undefined) {
+          var cloudfront = new _awsSdk2.default.CloudFront();
+          cloudfront.config.update({
+            accessKeyId: clientConfig.s3Options.accessKeyId,
+            secretAccessKey: clientConfig.s3Options.secretAccessKey
+          });
+
+          cloudfront.createInvalidation({
+            DistributionId: cloudfrontInvalidateOptions.DistributionId,
+            InvalidationBatch: {
+              CallerReference: Date.now().toString(),
+              Paths: {
+                Quantity: cloudfrontInvalidateOptions.Items.length,
+                Items: cloudfrontInvalidateOptions.Items
+              }
+            }
+          }, function (err, res) {
+            if (err) {
+              return reject(err);
+            }
+            return resolve(res.Id);
+          });
+        } else {
+          return resolve(null);
+        }
+      });
     }
   }]);
 

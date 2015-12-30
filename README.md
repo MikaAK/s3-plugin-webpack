@@ -65,6 +65,29 @@ var config = {
 }
 ```
 
+##### With CloudFront invalidation
+```javascript
+var config = {
+  plugins: [
+    new S3Plugin({
+      // Only upload css and js
+      include: /.*\.(css|js)/,
+      // s3Options are required
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket'
+      },
+      cloudfrontInvalidateOptions: {
+        DistributionId: process.env.CLOUDFRONT_DISTRIBUTION_ID,
+        Items: ["/*"]
+      }
+    })
+  ]
+}
+```
 
 ### Options
 

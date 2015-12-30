@@ -177,5 +177,9 @@ export default {
       .value()
 
     return Promise.all(_.any(errors) ? errors : files)
+  },
+
+  getCloudfrontInvalidateOptions() {
+    return s3Opts.cloudfrontInvalidateOptions
   }
 }
