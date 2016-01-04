@@ -196,11 +196,11 @@ module.exports = (function () {
               if (stat && stat.isDirectory()) {
                 _this2.getAllFilesRecursive(file).then(function (res) {
                   results.push.apply(results, _toConsumableArray(res));
-                  next();
+                  next.call(_this2);
                 });
               } else {
                 results.push(file);
-                next();
+                next.call(_this2);
               }
             });
           }).call(_this3);
