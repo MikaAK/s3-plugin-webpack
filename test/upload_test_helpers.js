@@ -59,6 +59,10 @@ export default {
     })
   },
 
+  addSlashToPath(pathName) {
+    return pathName.endsWith(path.sep) ? pathName : pathName + path.sep
+  },
+
   createFolder(pathToFolder) {
     spawnSync('mkdir', ['-p', pathToFolder], {stdio: 'inherit'})
   },
@@ -72,7 +76,7 @@ export default {
 
   testForFailFromDirectoryOrGetS3Files(directory) {
     return ({errors}) => {
-      var basePath = `${directory}${path.sep}`
+      var basePath = this.addSlashToPath(`${directory}`)
 
       if (errors)
         return assert.fail([], errors, BUILD_FAIL_ERROR)

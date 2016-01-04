@@ -15,7 +15,8 @@ describe('S3 Webpack Upload', function() {
   beforeEach(testHelpers.cleanOutputDirectory)
   describe('With directory', function() {
     var s3Config,
-        config
+        config,
+        testS3Upload = testHelpers.testForFailFromDirectoryOrGetS3Files(testHelpers.OUTPUT_PATH)
 
     beforeEach(function() {
       s3Config = {directory: path.resolve(CONTEXT, '.tmp')}
@@ -33,12 +34,18 @@ describe('S3 Webpack Upload', function() {
 
     it('uploads directory recursivly to s3', function() {
       testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
+      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
+      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested2'))
+
       testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply'))
       testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested'))
       testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
+      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested2'))
 
       return testHelpers.runWebpackConfig({config, s3Config})
-        .then(testHelpers.testForFailFromDirectoryOrGetS3Files(testHelpers.OUTPUT_PATH))
+        .then(testS3Upload)
         .then(assertFileMatches)
     })
   })
