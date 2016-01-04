@@ -140,11 +140,11 @@ module.exports = class S3Plugin {
               this.getAllFilesRecursive(file)
                 .then((res) => {
                   results.push(...res)
-                  next()
+                  next.call(this)
                 })
             } else {
               results.push(file)
-              next()
+              next.call(this)
             }
           })
         }).call(this)
