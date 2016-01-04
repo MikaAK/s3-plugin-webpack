@@ -3,7 +3,7 @@ import https from 'https'
 import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
-import ProgressBar from 'progress'
+//import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
@@ -241,16 +241,16 @@ module.exports = class S3Plugin {
   }
 
   uploadFiles(files = []) {
-    var sum = (array) => array.reduce((res, val) => res += val, 0)
+    //var sum = (array) => array.reduce((res, val) => res += val, 0)
     var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
-    var progressAmount = Array(files.length)
-    var progressTotal = Array(files.length)
+    //var progressAmount = Array(files.length)
+    //var progressTotal = Array(files.length)
 
-    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      complete: '>',
-      incomplete: '∆',
-      total: 100
-    })
+    //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+      //complete: '>',
+      //incomplete: '∆',
+      //total: 100
+    //})
 
     //uploadFiles.forEach(function({upload}, i) {
       //upload.on('progress', function() {
@@ -289,12 +289,12 @@ module.exports = class S3Plugin {
   }
 
   invalidateCloudfront() {
-    var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions
-    var clientConfig = this.clientConfig
+    var {clientConfig, cloudfrontInvalidateOptions} = this
 
     return new Promise(function(resolve, reject) {
-      if (cloudfrontInvalidateOptions.DistributionId != undefined) {
+      if (cloudfrontInvalidateOptions.DistributionId) {
         var cloudfront = new aws.CloudFront()
+
         cloudfront.config.update({
           accessKeyId: clientConfig.s3Options.accessKeyId,
           secretAccessKey: clientConfig.s3Options.secretAccessKey,
@@ -309,14 +309,8 @@ module.exports = class S3Plugin {
               Items: cloudfrontInvalidateOptions.Items
             }
           }
-        }, function (err, res) {
-          if (err) {
-            return reject(err)
-          }
-          return resolve(res.Id)
-        })
-      }
-      else {
+        }, (err, res) => err ? reject(err) : resolve(res.Id))
+      } else {
         return resolve(null)
       }
     })
