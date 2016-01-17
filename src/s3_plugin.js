@@ -165,12 +165,12 @@ module.exports = class S3Plugin {
   }
 
   getAssetFiles({chunks, options}) {
-    var publicPath = options.output.publicPath || options.output.path
+    var outputPath = options.output.path || options.output.publicPath
 
     var files = _(chunks)
       .pluck('files')
       .flatten()
-      .map(name => ({path: path.resolve(publicPath, name), name}))
+      .map(name => ({path: path.resolve(outputPath, name), name}))
       .value()
 
     return this.filterAllowedFiles(files)

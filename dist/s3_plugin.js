@@ -227,10 +227,10 @@ module.exports = (function () {
       var chunks = _ref.chunks;
       var options = _ref.options;
 
-      var publicPath = options.output.publicPath || options.output.path;
+      var outputPath = options.output.path || options.output.publicPath;
 
       var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (name) {
-        return { path: _path2.default.resolve(publicPath, name), name: name };
+        return { path: _path2.default.resolve(outputPath, name), name: name };
       }).value();
 
       return this.filterAllowedFiles(files);
