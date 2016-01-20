@@ -29,7 +29,17 @@ const PATH_SEP = path.sep
 
 module.exports = class S3Plugin {
   constructor(options = {}) {
-    var {s3Options = {}, s3UploadOptions = {}, cloudfrontInvalidateOptions = {}, directory, include, exclude, basePath, cdnizerOptions = {}, htmlFiles} = options
+    var {
+      include,
+      exclude,
+      basePath,
+      directory,
+      htmlFiles,
+      s3Options = {},
+      cdnizerOptions = {},
+      s3UploadOptions = {},
+      cloudfrontInvalidateOptions = {}
+    } = options
 
     this.uploadOptions = s3UploadOptions
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
@@ -106,26 +116,26 @@ module.exports = class S3Plugin {
     })
   }
 
-  filterPathFromFiles(path) {
-    return function(files) {
-      return files.map(function(file) {
+  filterPathFromFiles(rootPath) {
+    return files => {
+      return files.map(file => {
         return {
           path: file,
-          name: file.replace(path, '')
+          name: file.replace(rootPath, '')
         }
       })
     }
   }
 
-  addSeperatorToPath(path) {
-    return path.endsWith(PATH_SEP) ? path : path + PATH_SEP
+  addSeperatorToPath(fPath) {
+    return fPath.endsWith(PATH_SEP) ? fPath : fPath + PATH_SEP
   }
 
-  getAllFilesRecursive(path) {
+  getAllFilesRecursive(fPath) {
     return new Promise((resolve, reject) => {
       var results = []
 
-      fs.readdir(path, (err, list) => {
+      fs.readdir(fPath, (err, list) => {
         if (err)
           return reject(err)
 
@@ -137,7 +147,7 @@ module.exports = class S3Plugin {
           if (!file)
             return resolve(results)
 
-          file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file
+          file = (fPath.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? fPath : fPath + PATH_SEP) + file
 
           fs.stat(file, (err, stat) => {
             if (stat && stat.isDirectory()) {
