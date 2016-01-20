@@ -1,6 +1,7 @@
 'use strict';
 
 var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+//import ProgressBar from 'progress'
 
 var _http = require('http');
 
@@ -21,10 +22,6 @@ var _fs2 = _interopRequireDefault(_fs);
 var _path = require('path');
 
 var _path2 = _interopRequireDefault(_path);
-
-var _progress = require('progress');
-
-var _progress2 = _interopRequireDefault(_progress);
 
 var _cdnizer = require('cdnizer');
 
@@ -67,19 +64,19 @@ module.exports = (function () {
 
     _classCallCheck(this, S3Plugin);
 
+    var include = options.include;
+    var exclude = options.exclude;
+    var basePath = options.basePath;
+    var directory = options.directory;
+    var htmlFiles = options.htmlFiles;
     var _options$s3Options = options.s3Options;
     var s3Options = _options$s3Options === undefined ? {} : _options$s3Options;
+    var _options$cdnizerOptio = options.cdnizerOptions;
+    var cdnizerOptions = _options$cdnizerOptio === undefined ? {} : _options$cdnizerOptio;
     var _options$s3UploadOpti = options.s3UploadOptions;
     var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
     var _options$cloudfrontIn = options.cloudfrontInvalidateOptions;
     var cloudfrontInvalidateOptions = _options$cloudfrontIn === undefined ? {} : _options$cloudfrontIn;
-    var directory = options.directory;
-    var include = options.include;
-    var exclude = options.exclude;
-    var basePath = options.basePath;
-    var _options$cdnizerOptio = options.cdnizerOptions;
-    var cdnizerOptions = _options$cdnizerOptio === undefined ? {} : _options$cdnizerOptio;
-    var htmlFiles = options.htmlFiles;
 
     this.uploadOptions = s3UploadOptions;
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
@@ -155,30 +152,30 @@ module.exports = (function () {
     }
   }, {
     key: 'filterPathFromFiles',
-    value: function filterPathFromFiles(path) {
+    value: function filterPathFromFiles(rootPath) {
       return function (files) {
         return files.map(function (file) {
           return {
             path: file,
-            name: file.replace(path, '')
+            name: file.replace(rootPath, '')
           };
         });
       };
     }
   }, {
     key: 'addSeperatorToPath',
-    value: function addSeperatorToPath(path) {
-      return path.endsWith(PATH_SEP) ? path : path + PATH_SEP;
+    value: function addSeperatorToPath(fPath) {
+      return fPath.endsWith(PATH_SEP) ? fPath : fPath + PATH_SEP;
     }
   }, {
     key: 'getAllFilesRecursive',
-    value: function getAllFilesRecursive(path) {
+    value: function getAllFilesRecursive(fPath) {
       var _this3 = this;
 
       return new Promise(function (resolve, reject) {
         var results = [];
 
-        _fs2.default.readdir(path, function (err, list) {
+        _fs2.default.readdir(fPath, function (err, list) {
           if (err) return reject(err);
 
           var i = 0;
@@ -190,7 +187,7 @@ module.exports = (function () {
 
             if (!file) return resolve(results);
 
-            file = (path.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? path : path + PATH_SEP) + file;
+            file = (fPath.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? fPath : fPath + PATH_SEP) + file;
 
             _fs2.default.stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
@@ -324,22 +321,18 @@ module.exports = (function () {
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
-      var sum = function sum(array) {
-        return array.reduce(function (res, val) {
-          return res += val;
-        }, 0);
-      };
+      //var sum = (array) => array.reduce((res, val) => res += val, 0)
       var uploadFiles = files.map(function (file) {
         return _this7.uploadFile(file.name, file.path);
       });
-      var progressAmount = Array(files.length);
-      var progressTotal = Array(files.length);
+      //var progressAmount = Array(files.length)
+      //var progressTotal = Array(files.length)
 
-      var progressBar = new _progress2.default('Uploading [:bar] :percent :etas', {
-        complete: '>',
-        incomplete: '∆',
-        total: 100
-      });
+      //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+      //complete: '>',
+      //incomplete: '∆',
+      //total: 100
+      //})
 
       //uploadFiles.forEach(function({upload}, i) {
       //upload.on('progress', function() {
@@ -383,12 +376,13 @@ module.exports = (function () {
   }, {
     key: 'invalidateCloudfront',
     value: function invalidateCloudfront() {
-      var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions;
       var clientConfig = this.clientConfig;
+      var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions;
 
       return new Promise(function (resolve, reject) {
-        if (cloudfrontInvalidateOptions.DistributionId != undefined) {
+        if (cloudfrontInvalidateOptions.DistributionId) {
           var cloudfront = new _awsSdk2.default.CloudFront();
+
           cloudfront.config.update({
             accessKeyId: clientConfig.s3Options.accessKeyId,
             secretAccessKey: clientConfig.s3Options.secretAccessKey
@@ -404,10 +398,7 @@ module.exports = (function () {
               }
             }
           }, function (err, res) {
-            if (err) {
-              return reject(err);
-            }
-            return resolve(res.Id);
+            return err ? reject(err) : resolve(res.Id);
           });
         } else {
           return resolve(null);
