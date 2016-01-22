@@ -106,7 +106,7 @@ All contributions are welcome. Please make a pull request and make sure things s
 For tests you will need to either have the environment variables set or setup a .env file. There's a .env.sample so you can `cp .env.sample .env` and fill it in. Make sure to add any new environment variables.
 
 #### Commands to be aware of
-###### *WARNING*: The test sweet generates random files for certain checks. Ensure you delete files leftover on your Bucket.
+###### *WARNING*: The test suit generates random files for certain checks. Ensure you delete files leftover on your Bucket.
 - `npm run test` - Run test suit (You must have the .env file setup)
 - `npm run build` - Run build
 
