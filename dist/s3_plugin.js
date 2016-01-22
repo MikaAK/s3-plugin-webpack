@@ -224,7 +224,7 @@ module.exports = (function () {
       var chunks = _ref.chunks;
       var options = _ref.options;
 
-      var outputPath = options.output.path || options.output.publicPath;
+      var outputPath = options.output.path;
 
       var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (name) {
         return { path: _path2.default.resolve(outputPath, name), name: name };

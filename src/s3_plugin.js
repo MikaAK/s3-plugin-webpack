@@ -175,7 +175,7 @@ module.exports = class S3Plugin {
   }
 
   getAssetFiles({chunks, options}) {
-    var outputPath = options.output.path || options.output.publicPath
+    var outputPath = options.output.path
 
     var files = _(chunks)
       .pluck('files')
