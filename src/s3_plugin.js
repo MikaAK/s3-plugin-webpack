@@ -27,6 +27,8 @@ const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
 
 const PATH_SEP = path.sep
 
+const S3_PATH_SEP = '/'
+
 module.exports = class S3Plugin {
   constructor(options = {}) {
     var {
@@ -93,7 +95,7 @@ module.exports = class S3Plugin {
       if (isDirectoryUpload) {
         let dPath = this.addSeperatorToPath(this.options.directory)
         this.getAllFilesRecursive(dPath)
-          .then(this.filterPathFromFiles(dPath))
+          .then(this.filterAndTranslatePathFromFiles(dPath))
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
           .then(this.changeHtmlUrls.bind(this))
@@ -116,12 +118,12 @@ module.exports = class S3Plugin {
     })
   }
 
-  filterPathFromFiles(rootPath) {
+  filterAndTranslatePathFromFiles(rootPath) {
     return files => {
       return files.map(file => {
         return {
           path: file,
-          name: file.replace(rootPath, '')
+          name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
         }
       })
     }

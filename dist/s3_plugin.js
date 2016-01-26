@@ -1,6 +1,6 @@
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 //import ProgressBar from 'progress'
 
 var _http = require('http');
@@ -58,7 +58,9 @@ var REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
 
 var PATH_SEP = _path2.default.sep;
 
-module.exports = (function () {
+var S3_PATH_SEP = '/';
+
+module.exports = function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -134,7 +136,7 @@ module.exports = (function () {
 
         if (isDirectoryUpload) {
           var dPath = _this.addSeperatorToPath(_this.options.directory);
-          _this.getAllFilesRecursive(dPath).then(_this.filterPathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
+          _this.getAllFilesRecursive(dPath).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -151,13 +153,13 @@ module.exports = (function () {
       });
     }
   }, {
-    key: 'filterPathFromFiles',
-    value: function filterPathFromFiles(rootPath) {
+    key: 'filterAndTranslatePathFromFiles',
+    value: function filterAndTranslatePathFromFiles(rootPath) {
       return function (files) {
         return files.map(function (file) {
           return {
             path: file,
-            name: file.replace(rootPath, '')
+            name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
           };
         });
       };
@@ -408,4 +410,4 @@ module.exports = (function () {
   }]);
 
   return S3Plugin;
-})();
+}();
