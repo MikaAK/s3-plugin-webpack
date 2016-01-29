@@ -96,7 +96,7 @@ var config = {
 - `s3Options`: Provide keys for upload extention of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
 - `s3UploadOptions`: Provide upload options [putObject](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property )
 - `basePath`: Provide the namespace where upload files on S3
-- `directory`: Provide a directory to upload (defaults to webpack output directory)
+- `directory`: Provide a directory to upload (if not supplied will upload js/css from compilation)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
