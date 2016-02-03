@@ -7,6 +7,7 @@ import path from 'path'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
+import gitsha from 'git-bundle-sha';
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
@@ -40,7 +41,8 @@ module.exports = class S3Plugin {
       s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
-      cloudfrontInvalidateOptions = {}
+      cloudfrontInvalidateOptions = {},
+      git = {}
     } = options
 
     this.uploadOptions = s3UploadOptions
@@ -53,6 +55,7 @@ module.exports = class S3Plugin {
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
 
     this.options = {
+      git,
       directory,
       include,
       exclude,
@@ -93,19 +96,27 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        let dPath = this.addSeperatorToPath(this.options.directory)
-        this.getAllFilesRecursive(dPath)
-          .then(this.filterAndTranslatePathFromFiles(dPath))
-          .then(this.filterAllowedFiles.bind(this))
-          .then(this.uploadFiles.bind(this))
-          .then(this.changeHtmlUrls.bind(this))
-          .then(this.invalidateCloudfront.bind(this))
-          .then(() => cb())
-          .catch(e => {
-            compilation.errors.push(new Error(`S3Plugin: ${e}`))
-            cb()
-          })
-      } else {
+        this.addGitHashToBasePath(this.options.basePath)
+        .then((function(basePath){
+          this.options.basePath = basePath;
+          let dPath = this.addSeperatorToPath(this.options.directory)
+          this.getAllFilesRecursive(dPath)
+            .then(this.filterAndTranslatePathFromFiles(dPath))
+            .then(this.filterAllowedFiles.bind(this))
+            .then(this.uploadFiles.bind(this))
+            .then(this.changeHtmlUrls.bind(this))
+            .then(this.invalidateCloudfront.bind(this))
+            .then(() => cb())
+            .catch(e => {
+              compilation.errors.push(new Error(`S3Plugin: ${e}`))
+              cb()
+            })
+        }).bind(this))
+        .catch(e => {
+          compilation.errors.push(new Error(`S3Plugin: ${e}`))
+          cb()
+        })
+     } else {
         this.uploadFiles(this.getAssetFiles(compilation))
           .then(this.changeHtmlUrls.bind(this))
           .then(this.invalidateCloudfront.bind(this))
@@ -115,6 +126,20 @@ module.exports = class S3Plugin {
             cb()
           })
       }
+    })
+  }
+
+  addGitHashToBasePath(basePath) {
+    return new Promise((resolve, reject) => {
+      if (!this.options.git || !this.options.git.addGitHash) resolve({basePath})
+      var addGitHashToDirNo = this.options.git.addGitHashToDirNo;
+      gitsha(function(err, sha) {
+        if (err) reject(err);
+        var basePathParts = basePath.split(S3_PATH_SEP);
+        basePathParts[(addGitHashToDirNo ? (addGitHashToDirNo - 1)  : (basePathParts.length - 2))] += '.' + sha.substring(7,0)
+        resolve(basePathParts.join(S3_PATH_SEP))
+      });
+
     })
   }
 

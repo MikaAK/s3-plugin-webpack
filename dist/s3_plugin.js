@@ -1,6 +1,6 @@
 'use strict';
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 //import ProgressBar from 'progress'
 
 var _http = require('http');
@@ -35,6 +35,10 @@ var _awsSdk = require('aws-sdk');
 
 var _awsSdk2 = _interopRequireDefault(_awsSdk);
 
+var _gitBundleSha = require('git-bundle-sha');
+
+var _gitBundleSha2 = _interopRequireDefault(_gitBundleSha);
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
@@ -60,7 +64,7 @@ var PATH_SEP = _path2.default.sep;
 
 var S3_PATH_SEP = '/';
 
-module.exports = (function () {
+module.exports = function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
 
@@ -79,6 +83,8 @@ module.exports = (function () {
     var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
     var _options$cloudfrontIn = options.cloudfrontInvalidateOptions;
     var cloudfrontInvalidateOptions = _options$cloudfrontIn === undefined ? {} : _options$cloudfrontIn;
+    var _options$git = options.git;
+    var git = _options$git === undefined ? {} : _options$git;
 
     this.uploadOptions = s3UploadOptions;
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
@@ -90,6 +96,7 @@ module.exports = (function () {
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
+      git: git,
       directory: directory,
       include: include,
       exclude: exclude,
@@ -135,10 +142,16 @@ module.exports = (function () {
         }
 
         if (isDirectoryUpload) {
-          var dPath = _this.addSeperatorToPath(_this.options.directory);
-          _this.getAllFilesRecursive(dPath).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
-            return cb();
-          }).catch(function (e) {
+          _this.addGitHashToBasePath(_this.options.basePath).then(function (basePath) {
+            this.options.basePath = basePath;
+            var dPath = this.addSeperatorToPath(this.options.directory);
+            this.getAllFilesRecursive(dPath).then(this.filterAndTranslatePathFromFiles(dPath)).then(this.filterAllowedFiles.bind(this)).then(this.uploadFiles.bind(this)).then(this.changeHtmlUrls.bind(this)).then(this.invalidateCloudfront.bind(this)).then(function () {
+              return cb();
+            }).catch(function (e) {
+              compilation.errors.push(new Error('S3Plugin: ' + e));
+              cb();
+            });
+          }.bind(_this)).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
             cb();
           });
@@ -150,6 +163,22 @@ module.exports = (function () {
             cb();
           });
         }
+      });
+    }
+  }, {
+    key: 'addGitHashToBasePath',
+    value: function addGitHashToBasePath(basePath) {
+      var _this2 = this;
+
+      return new Promise(function (resolve, reject) {
+        if (!_this2.options.git || !_this2.options.git.addGitHash) resolve({ basePath: basePath });
+        var addGitHashToDirNo = _this2.options.git.addGitHashToDirNo;
+        (0, _gitBundleSha2.default)(function (err, sha) {
+          if (err) reject(err);
+          var basePathParts = basePath.split(S3_PATH_SEP);
+          basePathParts[addGitHashToDirNo ? addGitHashToDirNo - 1 : basePathParts.length - 2] += '.' + sha.substring(7, 0);
+          resolve(basePathParts.join(S3_PATH_SEP));
+        });
       });
     }
   }, {
@@ -172,7 +201,7 @@ module.exports = (function () {
   }, {
     key: 'getAllFilesRecursive',
     value: function getAllFilesRecursive(fPath) {
-      var _this3 = this;
+      var _this4 = this;
 
       return new Promise(function (resolve, reject) {
         var results = [];
@@ -183,7 +212,7 @@ module.exports = (function () {
           var i = 0;
 
           (function next() {
-            var _this2 = this;
+            var _this3 = this;
 
             var file = list[i++];
 
@@ -193,16 +222,16 @@ module.exports = (function () {
 
             _fs2.default.stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
-                _this2.getAllFilesRecursive(file).then(function (res) {
+                _this3.getAllFilesRecursive(file).then(function (res) {
                   results.push.apply(results, _toConsumableArray(res));
-                  next.call(_this2);
+                  next.call(_this3);
                 });
               } else {
                 results.push(file);
-                next.call(_this2);
+                next.call(_this3);
               }
             });
-          }).call(_this3);
+          }).call(_this4);
         });
       });
     }
@@ -237,13 +266,13 @@ module.exports = (function () {
   }, {
     key: 'cdnizeHtml',
     value: function cdnizeHtml(htmlPath) {
-      var _this4 = this;
+      var _this5 = this;
 
       return new Promise(function (resolve, reject) {
         _fs2.default.readFile(htmlPath, function (err, data) {
           if (err) return reject(err);
 
-          _fs2.default.writeFile(htmlPath, _this4.cdnizer(data.toString()), function (err) {
+          _fs2.default.writeFile(htmlPath, _this5.cdnizer(data.toString()), function (err) {
             if (err) return reject(err);
 
             resolve();
@@ -254,7 +283,7 @@ module.exports = (function () {
   }, {
     key: 'changeHtmlUrls',
     value: function changeHtmlUrls() {
-      var _this5 = this;
+      var _this6 = this;
 
       if (this.noCdnizer) return Promise.resolve();
 
@@ -273,16 +302,16 @@ module.exports = (function () {
       this.cdnizer = (0, _cdnizer2.default)(this.cdnizerOptions);
 
       return Promise.all(allHtml.map(function (file) {
-        return _this5.cdnizeHtml(file);
+        return _this6.cdnizeHtml(file);
       }));
     }
   }, {
     key: 'filterAllowedFiles',
     value: function filterAllowedFiles(files) {
-      var _this6 = this;
+      var _this7 = this;
 
       return files.reduce(function (res, file) {
-        if (_this6.isIncludeAndNotExclude(file.name) && !_this6.isIgnoredFile(file.name)) res.push(file);
+        if (_this7.isIncludeAndNotExclude(file.name) && !_this7.isIgnoredFile(file.name)) res.push(file);
 
         return res;
       }, []);
@@ -319,13 +348,13 @@ module.exports = (function () {
   }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this7 = this;
+      var _this8 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
       //var sum = (array) => array.reduce((res, val) => res += val, 0)
       var uploadFiles = files.map(function (file) {
-        return _this7.uploadFile(file.name, file.path);
+        return _this8.uploadFile(file.name, file.path);
       });
       //var progressAmount = Array(files.length)
       //var progressTotal = Array(files.length)
@@ -410,4 +439,4 @@ module.exports = (function () {
   }]);
 
   return S3Plugin;
-})();
+}();
