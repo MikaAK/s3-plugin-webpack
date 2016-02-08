@@ -172,11 +172,16 @@ module.exports = function () {
 
       return new Promise(function (resolve, reject) {
         if (!_this2.options.git || !_this2.options.git.addGitHash) resolve({ basePath: basePath });
-        var addGitHashToDirNo = _this2.options.git.addGitHashToDirNo;
+        var DirectoryLevelToInsertHashConf = _this2.options.git.DirectoryLevelToInsertHash;
         (0, _gitBundleSha2.default)(function (err, sha) {
           if (err) reject(err);
           var basePathParts = basePath.split(S3_PATH_SEP);
-          basePathParts[addGitHashToDirNo ? addGitHashToDirNo - 1 : basePathParts.length - 2] += '.' + sha.substring(7, 0);
+          var DirectoryLevelToInsertHash = basePathParts.length - 2; // set directory level to insert git SHA; default is the last\deepest directory
+          if (DirectoryLevelToInsertHashConf) {
+            // unless DirectoryLevelToInsertHashConf is defined
+            DirectoryLevelToInsertHash = DirectoryLevelToInsertHashConf - 1; // use the defined directory level and convert it to array index
+          }
+          basePathParts[DirectoryLevelToInsertHash] += '.' + sha.substring(7, 0);
           resolve(basePathParts.join(S3_PATH_SEP));
         });
       });
