@@ -7,7 +7,7 @@ import path from 'path'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
-import gitsha from 'git-bundle-sha';
+import gitsha from 'git-bundle-sha'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
@@ -43,7 +43,7 @@ module.exports = class S3Plugin {
       s3UploadOptions = {},
       cloudfrontInvalidateOptions = {},
       git = {}
-    } = options
+      } = options
 
     this.uploadOptions = s3UploadOptions
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
@@ -97,26 +97,26 @@ module.exports = class S3Plugin {
 
       if (isDirectoryUpload) {
         this.addGitHashToBasePath(this.options.basePath)
-        .then((function(basePath){
-          this.options.basePath = basePath;
-          let dPath = this.addSeperatorToPath(this.options.directory)
-          this.getAllFilesRecursive(dPath)
-            .then(this.filterAndTranslatePathFromFiles(dPath))
-            .then(this.filterAllowedFiles.bind(this))
-            .then(this.uploadFiles.bind(this))
-            .then(this.changeHtmlUrls.bind(this))
-            .then(this.invalidateCloudfront.bind(this))
-            .then(() => cb())
-            .catch(e => {
-              compilation.errors.push(new Error(`S3Plugin: ${e}`))
-              cb()
-            })
-        }).bind(this))
-        .catch(e => {
-          compilation.errors.push(new Error(`S3Plugin: ${e}`))
-          cb()
-        })
-     } else {
+          .then((function(basePath) {
+            this.options.basePath = basePath
+            let dPath = this.addSeperatorToPath(this.options.directory)
+            this.getAllFilesRecursive(dPath)
+              .then(this.filterAndTranslatePathFromFiles(dPath))
+              .then(this.filterAllowedFiles.bind(this))
+              .then(this.uploadFiles.bind(this))
+              .then(this.changeHtmlUrls.bind(this))
+              .then(this.invalidateCloudfront.bind(this))
+              .then(() => cb())
+              .catch(e => {
+                compilation.errors.push(new Error(`S3Plugin: ${e}`))
+                cb()
+              })
+          }).bind(this))
+          .catch(e => {
+            compilation.errors.push(new Error(`S3Plugin: ${e}`))
+            cb()
+          })
+      } else {
         this.uploadFiles(this.getAssetFiles(compilation))
           .then(this.changeHtmlUrls.bind(this))
           .then(this.invalidateCloudfront.bind(this))
@@ -132,14 +132,14 @@ module.exports = class S3Plugin {
   addGitHashToBasePath(basePath) {
     return new Promise((resolve, reject) => {
       if (!this.options.git || !this.options.git.addGitHash) resolve({basePath})
-      var addGitHashToDirNo = this.options.git.addGitHashToDirNo;
+      var DirectoryLevelToInsertHashConf = this.options.git.DirectoryLevelToInsertHash
       gitsha(function(err, sha) {
-        if (err) reject(err);
-        var basePathParts = basePath.split(S3_PATH_SEP);
-        basePathParts[(addGitHashToDirNo ? (addGitHashToDirNo - 1)  : (basePathParts.length - 2))] += '.' + sha.substring(7,0)
+        if (err) reject(err)
+        var basePathParts = basePath.split(S3_PATH_SEP)
+        var DirectoryLevelToInsertHash = (DirectoryLevelToInsertHashConf ? (DirectoryLevelToInsertHashConf - 1)  : (basePathParts.length - 2))
+        basePathParts[DirectoryLevelToInsertHash] += `.${sha.substring(7, 0)}`
         resolve(basePathParts.join(S3_PATH_SEP))
-      });
-
+      })
     })
   }
 
@@ -284,18 +284,18 @@ module.exports = class S3Plugin {
     //var progressTotal = Array(files.length)
 
     //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '∆',
-      //total: 100
+    //complete: '>',
+    //incomplete: '∆',
+    //total: 100
     //})
 
     //uploadFiles.forEach(function({upload}, i) {
-      //upload.on('progress', function() {
-        //progressTotal[i] = this.progressTotal
-        //progressAmount[i] = this.progressAmount
+    //upload.on('progress', function() {
+    //progressTotal[i] = this.progressTotal
+    //progressAmount[i] = this.progressAmount
 
-        //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
-      //})
+    //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
+    //})
     //})
 
     return Promise.all(uploadFiles.map(({promise}) => promise))
