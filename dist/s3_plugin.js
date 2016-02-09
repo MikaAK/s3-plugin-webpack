@@ -145,7 +145,9 @@ module.exports = function () {
           _this.addGitHashToBasePath(_this.options.basePath).then(function (basePath) {
             this.options.basePath = basePath;
             var dPath = this.addSeperatorToPath(this.options.directory);
-            this.getAllFilesRecursive(dPath).then(this.filterAndTranslatePathFromFiles(dPath)).then(this.filterAllowedFiles.bind(this)).then(this.uploadFiles.bind(this)).then(this.changeHtmlUrls.bind(this)).then(this.invalidateCloudfront.bind(this)).then(function () {
+            this.changeBaseHref.call(this).then(function () {
+              return this.getAllFilesRecursive(dPath);
+            }.bind(this)).then(this.filterAndTranslatePathFromFiles(dPath)).then(this.filterAllowedFiles.bind(this)).then(this.uploadFiles.bind(this)).then(this.changeHtmlUrls.bind(this)).then(this.resetBaseHref.bind(this)).then(this.invalidateCloudfront.bind(this)).then(function () {
               return cb();
             }).catch(function (e) {
               compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -286,6 +288,23 @@ module.exports = function () {
       });
     }
   }, {
+    key: 'replaceContentInFile',
+    value: function replaceContentInFile(filePath, findRegex, replacement) {
+      return new Promise(function (resolve, reject) {
+        _fs2.default.readFile(filePath, 'utf8', function (err, data) {
+          if (err) return reject(err);
+
+          var result = data.replace(findRegex, replacement);
+
+          _fs2.default.writeFile(filePath, result, function (err) {
+            if (err) return reject(err);
+
+            resolve();
+          });
+        });
+      });
+    }
+  }, {
     key: 'changeHtmlUrls',
     value: function changeHtmlUrls() {
       var _this6 = this;
@@ -311,12 +330,52 @@ module.exports = function () {
       }));
     }
   }, {
-    key: 'filterAllowedFiles',
-    value: function filterAllowedFiles(files) {
+    key: 'changeBaseHref',
+    value: function changeBaseHref() {
       var _this7 = this;
 
+      if (this.options.git.noBaseHrefChange) return Promise.resolve();
+
+      var indexFiles;
+      var directory = this.options.directory;
+
+      indexFiles = this.options.git.indexFiles || _fs2.default.readdirSync(directory).filter(function (file) {
+        return (/index\.html$/.test(file)
+        );
+      });
+      var indexFilesWithPath = this.addPathToFiles(indexFiles, directory);
+
+      return Promise.all(indexFilesWithPath.map(function (file) {
+        return _this7.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/' + _this7.options.basePath + '"/>');
+      }));
+    }
+  }, {
+    key: 'resetBaseHref',
+    value: function resetBaseHref() {
+      var _this8 = this;
+
+      if (this.options.git.noBaseHrefChange) return Promise.resolve();
+
+      var indexFiles;
+      var directory = this.options.directory;
+
+      indexFiles = this.options.git.indexFiles || _fs2.default.readdirSync(directory).filter(function (file) {
+        return (/index\.html$/.test(file)
+        );
+      });
+      var indexFilesWithPath = this.addPathToFiles(indexFiles, directory);
+
+      return Promise.all(indexFilesWithPath.map(function (file) {
+        return _this8.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/" />');
+      }));
+    }
+  }, {
+    key: 'filterAllowedFiles',
+    value: function filterAllowedFiles(files) {
+      var _this9 = this;
+
       return files.reduce(function (res, file) {
-        if (_this7.isIncludeAndNotExclude(file.name) && !_this7.isIgnoredFile(file.name)) res.push(file);
+        if (_this9.isIncludeAndNotExclude(file.name) && !_this9.isIgnoredFile(file.name)) res.push(file);
 
         return res;
       }, []);
@@ -353,13 +412,13 @@ module.exports = function () {
   }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this8 = this;
+      var _this10 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
       //var sum = (array) => array.reduce((res, val) => res += val, 0)
       var uploadFiles = files.map(function (file) {
-        return _this8.uploadFile(file.name, file.path);
+        return _this10.uploadFile(file.name, file.path);
       });
       //var progressAmount = Array(files.length)
       //var progressTotal = Array(files.length)

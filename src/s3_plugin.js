@@ -100,11 +100,15 @@ module.exports = class S3Plugin {
           .then((function(basePath) {
             this.options.basePath = basePath
             let dPath = this.addSeperatorToPath(this.options.directory)
-            this.getAllFilesRecursive(dPath)
+            this.changeBaseHref.call(this)
+              .then((function() {
+                return this.getAllFilesRecursive(dPath)
+              }).bind(this))
               .then(this.filterAndTranslatePathFromFiles(dPath))
               .then(this.filterAllowedFiles.bind(this))
               .then(this.uploadFiles.bind(this))
               .then(this.changeHtmlUrls.bind(this))
+              .then(this.resetBaseHref.bind(this))
               .then(this.invalidateCloudfront.bind(this))
               .then(() => cb())
               .catch(e => {
@@ -232,6 +236,24 @@ module.exports = class S3Plugin {
     })
   }
 
+  replaceContentInFile(filePath, findRegex, replacement) {
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err)
+          return reject(err)
+
+        var result = data.replace(findRegex, replacement)
+
+        fs.writeFile(filePath, result, function(err) {
+          if (err)
+            return reject(err)
+
+          resolve()
+        })
+      })
+    })
+  }
+
   changeHtmlUrls() {
     if (this.noCdnizer)
       return Promise.resolve()
@@ -246,6 +268,32 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
+  }
+
+  changeBaseHref() {
+    if (this.options.git.noBaseHrefChange)
+      return Promise.resolve()
+
+    var indexFiles,
+        {directory} = this.options
+
+    indexFiles = this.options.git.indexFiles || fs.readdirSync(directory).filter(file => /index\.html$/.test(file))
+    var indexFilesWithPath = this.addPathToFiles(indexFiles, directory)
+
+    return Promise.all(indexFilesWithPath.map(file => this.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, `<base href="/${this.options.basePath}"/>`)))
+  }
+
+  resetBaseHref() {
+    if (this.options.git.noBaseHrefChange)
+      return Promise.resolve()
+
+    var indexFiles,
+        {directory} = this.options
+
+    indexFiles = this.options.git.indexFiles || fs.readdirSync(directory).filter(file => /index\.html$/.test(file))
+    var indexFilesWithPath = this.addPathToFiles(indexFiles, directory)
+
+    return Promise.all(indexFilesWithPath.map(file => this.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, `<base href="/" />`)))
   }
 
   filterAllowedFiles(files) {
