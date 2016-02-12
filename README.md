@@ -1,8 +1,8 @@
 
 S3 Plugin
 ===
-[![Stories in Ready](https://badge.waffle.io/MikaAK/s3-plugin-webpack.png?label=ready&title=Ready)](https://waffle.io/MikaAK/s3-plugin-webpack)
 [![Travis Badge](https://travis-ci.org/MikaAK/s3-plugin-webpack.svg?branch=master)](https://travis-ci.org/MikaAK/s3-plugin-webpack)
+[![Code Climate](https://codeclimate.com/github/MikaAK/s3-plugin-webpack/badges/gpa.svg)](https://codeclimate.com/github/MikaAK/s3-plugin-webpack)
 
 This plugin will upload all built assets to s3
 

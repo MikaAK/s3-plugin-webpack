@@ -29,6 +29,10 @@ const PATH_SEP = path.sep
 
 const S3_PATH_SEP = '/'
 
+var compileError = function(compilation, error) {
+  compilation.errors.push(new Error(error))
+}
+
 module.exports = class S3Plugin {
   constructor(options = {}) {
     var {
@@ -83,12 +87,12 @@ module.exports = class S3Plugin {
 
     compiler.plugin('after-emit', (compilation, cb) => {
       if (!hasRequiredOptions) {
-        compilation.errors.push(new Error(`S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`))
+        compileError(compilation, `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`)
         cb()
       }
 
       if (!hasRequiredUploadOpts) {
-        compilation.errors.push(new Error(`S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`))
+        compileError(compilation, `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`)
         cb()
       }
 
@@ -102,7 +106,7 @@ module.exports = class S3Plugin {
           .then(this.invalidateCloudfront.bind(this))
           .then(() => cb())
           .catch(e => {
-            compilation.errors.push(new Error(`S3Plugin: ${e}`))
+            compileError(compilation, `S3Plugin: ${e}`)
             cb()
           })
       } else {
@@ -111,7 +115,7 @@ module.exports = class S3Plugin {
           .then(this.invalidateCloudfront.bind(this))
           .then(() => cb())
           .catch(e => {
-            compilation.errors.push(new Error(`S3Plugin: ${e}`))
+            compileError(compilation, `S3Plugin: ${e}`)
             cb()
           })
       }
