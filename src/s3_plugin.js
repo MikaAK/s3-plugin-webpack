@@ -42,7 +42,7 @@ module.exports = class S3Plugin {
       cdnizerOptions = {},
       s3UploadOptions = {},
       cloudfrontInvalidateOptions = {},
-      git = {}
+      addGitHash
       } = options
 
     this.uploadOptions = s3UploadOptions
@@ -55,7 +55,7 @@ module.exports = class S3Plugin {
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
 
     this.options = {
-      git,
+      addGitHash,
       directory,
       include,
       exclude,
@@ -103,7 +103,6 @@ module.exports = class S3Plugin {
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
           .then(this.changeHtmlUrls.bind(this))
-          .then(this.resetBaseHref.bind(this))
           .then(this.invalidateCloudfront.bind(this))
           .then(() => cb())
           .catch(e => {
@@ -125,7 +124,7 @@ module.exports = class S3Plugin {
 
   addGitHashToBasePath(basePath) {
     return new Promise((resolve, reject) => {
-      if (!this.options.git || !this.options.git.addGitHash) resolve({basePath})
+      if (!this.options.addGitHash) resolve({basePath})
       var that = this
       gitsha(function(err, sha) {
         if (err) reject(err)
@@ -256,19 +255,6 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
-  }
-
-  resetBaseHref() {
-    if (this.options.git.noBaseHrefChange)
-      return Promise.resolve()
-
-    var indexFiles,
-        {directory} = this.options
-
-    indexFiles = this.options.git.indexFiles || fs.readdirSync(directory).filter(file => /index\.html$/.test(file))
-    var indexFilesWithPath = this.addPathToFiles(indexFiles, directory)
-
-    return Promise.all(indexFilesWithPath.map(file => this.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, `<base href="/" />`)))
   }
 
   filterAllowedFiles(files) {

@@ -104,9 +104,7 @@ var config = {
       s3UploadOptions: {
         Bucket: 'MyBucket'
       },
-      git: {
-        addGitHash: true
-      }
+      addGitHash: true
     })
   ]
 }
@@ -123,7 +121,7 @@ var config = {
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
-- `git`: options for adding latest git commit truncated SHA as a suffix to an S3 directory 
+- `addGitHash`: option for adding latest git commit truncated SHA as a suffix to the deepest S3 directory 
 
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`

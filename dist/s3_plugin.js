@@ -83,8 +83,7 @@ module.exports = function () {
     var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
     var _options$cloudfrontIn = options.cloudfrontInvalidateOptions;
     var cloudfrontInvalidateOptions = _options$cloudfrontIn === undefined ? {} : _options$cloudfrontIn;
-    var _options$git = options.git;
-    var git = _options$git === undefined ? {} : _options$git;
+    var addGitHash = options.addGitHash;
 
     this.uploadOptions = s3UploadOptions;
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
@@ -96,7 +95,7 @@ module.exports = function () {
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
-      git: git,
+      addGitHash: addGitHash,
       directory: directory,
       include: include,
       exclude: exclude,
@@ -143,7 +142,7 @@ module.exports = function () {
 
         if (isDirectoryUpload) {
           var dPath = _this.addSeperatorToPath(_this.options.directory);
-          _this.addGitHashToBasePath.call(_this, _this.options.basePath).then(_this.getAllFilesRecursive.bind(_this, dPath)).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.resetBaseHref.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
+          _this.addGitHashToBasePath.call(_this, _this.options.basePath).then(_this.getAllFilesRecursive.bind(_this, dPath)).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
@@ -165,7 +164,7 @@ module.exports = function () {
       var _this2 = this;
 
       return new Promise(function (resolve, reject) {
-        if (!_this2.options.git || !_this2.options.git.addGitHash) resolve({ basePath: basePath });
+        if (!_this2.options.addGitHash) resolve({ basePath: basePath });
         var that = _this2;
         (0, _gitBundleSha2.default)(function (err, sha) {
           if (err) reject(err);
@@ -319,32 +318,12 @@ module.exports = function () {
       }));
     }
   }, {
-    key: 'resetBaseHref',
-    value: function resetBaseHref() {
-      var _this7 = this;
-
-      if (this.options.git.noBaseHrefChange) return Promise.resolve();
-
-      var indexFiles;
-      var directory = this.options.directory;
-
-      indexFiles = this.options.git.indexFiles || _fs2.default.readdirSync(directory).filter(function (file) {
-        return (/index\.html$/.test(file)
-        );
-      });
-      var indexFilesWithPath = this.addPathToFiles(indexFiles, directory);
-
-      return Promise.all(indexFilesWithPath.map(function (file) {
-        return _this7.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/" />');
-      }));
-    }
-  }, {
     key: 'filterAllowedFiles',
     value: function filterAllowedFiles(files) {
-      var _this8 = this;
+      var _this7 = this;
 
       return files.reduce(function (res, file) {
-        if (_this8.isIncludeAndNotExclude(file.name) && !_this8.isIgnoredFile(file.name)) res.push(file);
+        if (_this7.isIncludeAndNotExclude(file.name) && !_this7.isIgnoredFile(file.name)) res.push(file);
 
         return res;
       }, []);
@@ -381,13 +360,13 @@ module.exports = function () {
   }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this9 = this;
+      var _this8 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
       //var sum = (array) => array.reduce((res, val) => res += val, 0)
       var uploadFiles = files.map(function (file) {
-        return _this9.uploadFile(file.name, file.path);
+        return _this8.uploadFile(file.name, file.path);
       });
       //var progressAmount = Array(files.length)
       //var progressTotal = Array(files.length)
