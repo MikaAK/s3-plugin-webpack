@@ -142,18 +142,10 @@ module.exports = function () {
         }
 
         if (isDirectoryUpload) {
-          _this.addGitHashToBasePath(_this.options.basePath).then(function (basePath) {
-            this.options.basePath = basePath;
-            var dPath = this.addSeperatorToPath(this.options.directory);
-            this.changeBaseHref.call(this).then(function () {
-              return this.getAllFilesRecursive(dPath);
-            }.bind(this)).then(this.filterAndTranslatePathFromFiles(dPath)).then(this.filterAllowedFiles.bind(this)).then(this.uploadFiles.bind(this)).then(this.changeHtmlUrls.bind(this)).then(this.resetBaseHref.bind(this)).then(this.invalidateCloudfront.bind(this)).then(function () {
-              return cb();
-            }).catch(function (e) {
-              compilation.errors.push(new Error('S3Plugin: ' + e));
-              cb();
-            });
-          }.bind(_this)).catch(function (e) {
+          var dPath = _this.addSeperatorToPath(_this.options.directory);
+          _this.addGitHashToBasePath.call(_this, _this.options.basePath).then(_this.getAllFilesRecursive.bind(_this, dPath)).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.resetBaseHref.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
+            return cb();
+          }).catch(function (e) {
             compilation.errors.push(new Error('S3Plugin: ' + e));
             cb();
           });
@@ -174,17 +166,14 @@ module.exports = function () {
 
       return new Promise(function (resolve, reject) {
         if (!_this2.options.git || !_this2.options.git.addGitHash) resolve({ basePath: basePath });
-        var DirectoryLevelToInsertHashConf = _this2.options.git.DirectoryLevelToInsertHash;
+        var that = _this2;
         (0, _gitBundleSha2.default)(function (err, sha) {
           if (err) reject(err);
           var basePathParts = basePath.split(S3_PATH_SEP);
-          var DirectoryLevelToInsertHash = basePathParts.length - 2; // set directory level to insert git SHA; default is the last\deepest directory
-          if (DirectoryLevelToInsertHashConf) {
-            // unless DirectoryLevelToInsertHashConf is defined
-            DirectoryLevelToInsertHash = DirectoryLevelToInsertHashConf - 1; // use the defined directory level and convert it to array index
-          }
-          basePathParts[DirectoryLevelToInsertHash] += '.' + sha.substring(7, 0);
-          resolve(basePathParts.join(S3_PATH_SEP));
+          var directoryLevelToInsertHash = basePathParts.length - 2; // set directory level to insert git SHA; default is the last\deepest directory
+          basePathParts[directoryLevelToInsertHash] += '.' + sha.substring(7, 0);
+          that.options.basePath = basePathParts.join(S3_PATH_SEP);
+          resolve(that.options.basePath);
         });
       });
     }
@@ -330,8 +319,8 @@ module.exports = function () {
       }));
     }
   }, {
-    key: 'changeBaseHref',
-    value: function changeBaseHref() {
+    key: 'resetBaseHref',
+    value: function resetBaseHref() {
       var _this7 = this;
 
       if (this.options.git.noBaseHrefChange) return Promise.resolve();
@@ -346,36 +335,16 @@ module.exports = function () {
       var indexFilesWithPath = this.addPathToFiles(indexFiles, directory);
 
       return Promise.all(indexFilesWithPath.map(function (file) {
-        return _this7.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/' + _this7.options.basePath + '"/>');
-      }));
-    }
-  }, {
-    key: 'resetBaseHref',
-    value: function resetBaseHref() {
-      var _this8 = this;
-
-      if (this.options.git.noBaseHrefChange) return Promise.resolve();
-
-      var indexFiles;
-      var directory = this.options.directory;
-
-      indexFiles = this.options.git.indexFiles || _fs2.default.readdirSync(directory).filter(function (file) {
-        return (/index\.html$/.test(file)
-        );
-      });
-      var indexFilesWithPath = this.addPathToFiles(indexFiles, directory);
-
-      return Promise.all(indexFilesWithPath.map(function (file) {
-        return _this8.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/" />');
+        return _this7.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, '<base href="/" />');
       }));
     }
   }, {
     key: 'filterAllowedFiles',
     value: function filterAllowedFiles(files) {
-      var _this9 = this;
+      var _this8 = this;
 
       return files.reduce(function (res, file) {
-        if (_this9.isIncludeAndNotExclude(file.name) && !_this9.isIgnoredFile(file.name)) res.push(file);
+        if (_this8.isIncludeAndNotExclude(file.name) && !_this8.isIgnoredFile(file.name)) res.push(file);
 
         return res;
       }, []);
@@ -412,13 +381,13 @@ module.exports = function () {
   }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this10 = this;
+      var _this9 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
       //var sum = (array) => array.reduce((res, val) => res += val, 0)
       var uploadFiles = files.map(function (file) {
-        return _this10.uploadFile(file.name, file.path);
+        return _this9.uploadFile(file.name, file.path);
       });
       //var progressAmount = Array(files.length)
       //var progressTotal = Array(files.length)

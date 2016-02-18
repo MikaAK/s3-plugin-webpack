@@ -96,26 +96,16 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        this.addGitHashToBasePath(this.options.basePath)
-          .then((function(basePath) {
-            this.options.basePath = basePath
-            let dPath = this.addSeperatorToPath(this.options.directory)
-            this.changeBaseHref.call(this)
-              .then((function() {
-                return this.getAllFilesRecursive(dPath)
-              }).bind(this))
-              .then(this.filterAndTranslatePathFromFiles(dPath))
-              .then(this.filterAllowedFiles.bind(this))
-              .then(this.uploadFiles.bind(this))
-              .then(this.changeHtmlUrls.bind(this))
-              .then(this.resetBaseHref.bind(this))
-              .then(this.invalidateCloudfront.bind(this))
-              .then(() => cb())
-              .catch(e => {
-                compilation.errors.push(new Error(`S3Plugin: ${e}`))
-                cb()
-              })
-          }).bind(this))
+        let dPath = this.addSeperatorToPath(this.options.directory)
+        this.addGitHashToBasePath.call(this, this.options.basePath)
+          .then(this.getAllFilesRecursive.bind(this, dPath))
+          .then(this.filterAndTranslatePathFromFiles(dPath))
+          .then(this.filterAllowedFiles.bind(this))
+          .then(this.uploadFiles.bind(this))
+          .then(this.changeHtmlUrls.bind(this))
+          .then(this.resetBaseHref.bind(this))
+          .then(this.invalidateCloudfront.bind(this))
+          .then(() => cb())
           .catch(e => {
             compilation.errors.push(new Error(`S3Plugin: ${e}`))
             cb()
@@ -136,16 +126,14 @@ module.exports = class S3Plugin {
   addGitHashToBasePath(basePath) {
     return new Promise((resolve, reject) => {
       if (!this.options.git || !this.options.git.addGitHash) resolve({basePath})
-      var DirectoryLevelToInsertHashConf = this.options.git.DirectoryLevelToInsertHash
+      var that = this
       gitsha(function(err, sha) {
         if (err) reject(err)
         var basePathParts = basePath.split(S3_PATH_SEP)
-        var DirectoryLevelToInsertHash = basePathParts.length - 2 // set directory level to insert git SHA; default is the last\deepest directory
-        if (DirectoryLevelToInsertHashConf) { // unless DirectoryLevelToInsertHashConf is defined
-          DirectoryLevelToInsertHash = DirectoryLevelToInsertHashConf - 1 // use the defined directory level and convert it to array index
-        }
-        basePathParts[DirectoryLevelToInsertHash] += `.${sha.substring(7, 0)}`
-        resolve(basePathParts.join(S3_PATH_SEP))
+        var directoryLevelToInsertHash = basePathParts.length - 2 // set directory level to insert git SHA; default is the last\deepest directory
+        basePathParts[directoryLevelToInsertHash] += `.${sha.substring(7, 0)}`
+        that.options.basePath = basePathParts.join(S3_PATH_SEP)
+        resolve(that.options.basePath);
       })
     })
   }
@@ -268,19 +256,6 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
-  }
-
-  changeBaseHref() {
-    if (this.options.git.noBaseHrefChange)
-      return Promise.resolve()
-
-    var indexFiles,
-        {directory} = this.options
-
-    indexFiles = this.options.git.indexFiles || fs.readdirSync(directory).filter(file => /index\.html$/.test(file))
-    var indexFilesWithPath = this.addPathToFiles(indexFiles, directory)
-
-    return Promise.all(indexFilesWithPath.map(file => this.replaceContentInFile(file, /<base href=".*?"\s*\/>/i, `<base href="/${this.options.basePath}"/>`)))
   }
 
   resetBaseHref() {
