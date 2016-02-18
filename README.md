@@ -89,6 +89,27 @@ var config = {
 }
 ```
 
+##### With latest Git commit hash as a directory suffix
+```javascript
+var config = {
+  plugins: [
+    new S3Plugin({
+      // Only upload css and js
+      include: /.*\.(css|js)/,
+      // s3Options are required
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket'
+      },
+      addGitHash: true
+    })
+  ]
+}
+```
+
 ### Options
 
 - `exclude`: Regex to match for excluded content
@@ -100,6 +121,7 @@ var config = {
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
+- `addGitHash`: option for adding latest git commit truncated SHA as a suffix to the deepest S3 directory 
 
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`

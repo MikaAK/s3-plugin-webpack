@@ -7,6 +7,7 @@ import path from 'path'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
+import gitsha from 'git-bundle-sha'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
@@ -44,8 +45,9 @@ module.exports = class S3Plugin {
       s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
-      cloudfrontInvalidateOptions = {}
-    } = options
+      cloudfrontInvalidateOptions = {},
+      addGitHash
+      } = options
 
     this.uploadOptions = s3UploadOptions
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
@@ -57,6 +59,7 @@ module.exports = class S3Plugin {
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
 
     this.options = {
+      addGitHash,
       directory,
       include,
       exclude,
@@ -98,7 +101,8 @@ module.exports = class S3Plugin {
 
       if (isDirectoryUpload) {
         let dPath = this.addSeperatorToPath(this.options.directory)
-        this.getAllFilesRecursive(dPath)
+        this.addGitHashToBasePath.call(this, this.options.basePath)
+          .then(this.getAllFilesRecursive.bind(this, dPath))
           .then(this.filterAndTranslatePathFromFiles(dPath))
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
@@ -119,6 +123,21 @@ module.exports = class S3Plugin {
             cb()
           })
       }
+    })
+  }
+
+  addGitHashToBasePath(basePath) {
+    return new Promise((resolve, reject) => {
+      if (!this.options.addGitHash) resolve({basePath})
+      var that = this
+      gitsha(function(err, sha) {
+        if (err) reject(err)
+        var basePathParts = basePath.split(S3_PATH_SEP)
+        var directoryLevelToInsertHash = basePathParts.length - 2 // set directory level to insert git SHA; default is the last\deepest directory
+        basePathParts[directoryLevelToInsertHash] += `.${sha.substring(7, 0)}`
+        that.options.basePath = basePathParts.join(S3_PATH_SEP)
+        resolve(that.options.basePath);
+      })
     })
   }
 
@@ -208,6 +227,24 @@ module.exports = class S3Plugin {
     })
   }
 
+  replaceContentInFile(filePath, findRegex, replacement) {
+    return new Promise((resolve, reject) => {
+      fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err)
+          return reject(err)
+
+        var result = data.replace(findRegex, replacement)
+
+        fs.writeFile(filePath, result, function(err) {
+          if (err)
+            return reject(err)
+
+          resolve()
+        })
+      })
+    })
+  }
+
   changeHtmlUrls() {
     if (this.noCdnizer)
       return Promise.resolve()
@@ -263,18 +300,18 @@ module.exports = class S3Plugin {
     //var progressTotal = Array(files.length)
 
     //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '∆',
-      //total: 100
+    //complete: '>',
+    //incomplete: '∆',
+    //total: 100
     //})
 
     //uploadFiles.forEach(function({upload}, i) {
-      //upload.on('progress', function() {
-        //progressTotal[i] = this.progressTotal
-        //progressAmount[i] = this.progressAmount
+    //upload.on('progress', function() {
+    //progressTotal[i] = this.progressTotal
+    //progressAmount[i] = this.progressAmount
 
-        //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
-      //})
+    //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
+    //})
     //})
 
     return Promise.all(uploadFiles.map(({promise}) => promise))
