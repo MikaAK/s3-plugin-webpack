@@ -60,6 +60,10 @@ var PATH_SEP = _path2.default.sep;
 
 var S3_PATH_SEP = '/';
 
+var DEFAULT_TRANSFORM = function DEFAULT_TRANSFORM(item) {
+  return Promise.resolve(item);
+};
+
 var compileError = function compileError(compilation, error) {
   compilation.errors.push(new Error(error));
 };
@@ -75,6 +79,8 @@ module.exports = (function () {
     var basePath = options.basePath;
     var directory = options.directory;
     var htmlFiles = options.htmlFiles;
+    var _options$basePathTran = options.basePathTransform;
+    var basePathTransform = _options$basePathTran === undefined ? DEFAULT_TRANSFORM : _options$basePathTran;
     var _options$s3Options = options.s3Options;
     var s3Options = _options$s3Options === undefined ? {} : _options$s3Options;
     var _options$cdnizerOptio = options.cdnizerOptions;
@@ -91,6 +97,7 @@ module.exports = (function () {
     this.urlMappings = [];
     this.uploadTotal = 0;
     this.uploadProgress = 0;
+    this.basePathTransform = basePathTransform;
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
 
     this.options = {
@@ -141,7 +148,7 @@ module.exports = (function () {
         if (isDirectoryUpload) {
           var dPath = _this.addSeperatorToPath(_this.options.directory);
 
-          _this.getAllFilesRecursive(dPath).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
+          _this.getAllFilesRecursive(dPath).then(_this.translatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
             compileError(compilation, 'S3Plugin: ' + e);
@@ -158,8 +165,8 @@ module.exports = (function () {
       });
     }
   }, {
-    key: 'filterAndTranslatePathFromFiles',
-    value: function filterAndTranslatePathFromFiles(rootPath) {
+    key: 'translatePathFromFiles',
+    value: function translatePathFromFiles(rootPath) {
       return function (files) {
         return _lodash2.default.map(files, function (file) {
           return {
@@ -172,6 +179,8 @@ module.exports = (function () {
   }, {
     key: 'addSeperatorToPath',
     value: function addSeperatorToPath(fPath) {
+      if (!fPath) return fPath;
+
       return _lodash2.default.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP;
     }
   }, {
@@ -322,16 +331,32 @@ module.exports = (function () {
       this.isConnected = true;
     }
   }, {
+    key: 'transformBasePath',
+    value: function transformBasePath() {
+      var _this7 = this;
+
+      return Promise.resolve(this.basePathTransform(this.options.basePath)).then(function (nPath) {
+        return _this7.options.basePath = _this7.addSeperatorToPath(nPath);
+      });
+    }
+  }, {
     key: 'uploadFiles',
     value: function uploadFiles() {
-      var _this7 = this;
+      var _this8 = this;
 
       var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
-      //var sum = (array) => array.reduce((res, val) => res += val, 0)
-      var uploadFiles = files.map(function (file) {
-        return _this7.uploadFile(file.name, file.path);
+      return this.transformBasePath().then(function () {
+        var uploadFiles = files.map(function (file) {
+          return _this8.uploadFile(file.name, file.path);
+        });
+
+        return Promise.all(uploadFiles.map(function (_ref2) {
+          var promise = _ref2.promise;
+          return promise;
+        }));
       });
+      //var sum = (array) => array.reduce((res, val) => res += val, 0)
       //var progressAmount = Array(files.length)
       //var progressTotal = Array(files.length)
 
@@ -349,11 +374,6 @@ module.exports = (function () {
       //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
       //})
       //})
-
-      return Promise.all(uploadFiles.map(function (_ref2) {
-        var promise = _ref2.promise;
-        return promise;
-      }));
     }
   }, {
     key: 'uploadFile',
