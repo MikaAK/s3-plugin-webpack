@@ -6,7 +6,8 @@ import {assert} from 'chai'
 const CONTEXT = __dirname
 
 var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
-    testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers)
+    testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers),
+    testForErrorsOrGetFileNames = testHelpers.testForErrorsOrGetFileNames.bind(testHelpers)
 
 // Notes:
 // I had to use a resolve for the error instead of reject
@@ -67,12 +68,14 @@ describe('S3 Webpack Upload', function() {
   })
 
   it('starts a CloudFront invalidation', function() {
-    var randomFile
+    var config,
+        randomFile
 
     var s3Config = {
       cloudfrontInvalidateOptions: testHelpers.getCloudfrontInvalidateOptions()
     }
-    var config = testHelpers.createWebpackConfig({s3Config})
+
+    config = testHelpers.createWebpackConfig({s3Config})
 
     testHelpers.createOutputPath()
     randomFile = testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
@@ -120,18 +123,59 @@ describe('S3 Webpack Upload', function() {
     var config = testHelpers.createWebpackConfig({s3Config})
 
     return testHelpers.runWebpackConfig({config})
-      .then(function({stats, errors}) {
-        if (errors)
-          return assert.fail([], errors, 'Webpack Build Failed')
-
-        return testHelpers.getFilesFromStats(stats)
-      })
-      .then(files => Promise.resolve(files.filter(name => /.*\.html$/.test(name))))
+      .then(testForErrorsOrGetFileNames)
+      .then(fileNames => Promise.resolve(fileNames.filter(name => /.*\.html$/.test(name))))
       .then(function([htmlFile]) {
         var outputFile = testHelpers.readFileFromOutputDir(htmlFile),
             s3UrlRegex = new RegExp(testHelpers.S3_URL, 'gi')
 
         return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`)
       })
+  })
+
+  it('can transform base path with promise', function() {
+    var NAME_PREFIX = 'TEST112233',
+        BASE_PATH = 'test'
+    var s3Config = {
+      basePath: BASE_PATH,
+      basePathTransform(basePath) {
+        return Promise.resolve(`${basePath}${NAME_PREFIX}`)
+      }
+    }
+    var config = testHelpers.createWebpackConfig({s3Config})
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForErrorsOrGetFileNames)
+      .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
+      .then(([fileName]) => {
+        return Promise.all([
+          testHelpers.readFileFromOutputDir(fileName),
+          testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
+        ])
+      })
+      .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+  })
+
+  it('can transform base path without promise', function() {
+    var NAME_PREFIX = 'TEST112233',
+        BASE_PATH = 'test'
+    var s3Config = {
+      basePath: BASE_PATH,
+      basePathTransform(basePath) {
+        return `${basePath}${NAME_PREFIX}`
+      }
+    }
+    var config = testHelpers.createWebpackConfig({s3Config})
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForErrorsOrGetFileNames)
+      .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
+      .then(([fileName]) => {
+        return Promise.all([
+          testHelpers.readFileFromOutputDir(fileName),
+          testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
+        ])
+      })
+      .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
   })
 })

@@ -29,6 +29,10 @@ const PATH_SEP = path.sep
 
 const S3_PATH_SEP = '/'
 
+const DEFAULT_TRANSFORM = function(item) {
+  return Promise.resolve(item)
+}
+
 var compileError = function(compilation, error) {
   compilation.errors.push(new Error(error))
 }
@@ -41,6 +45,7 @@ module.exports = class S3Plugin {
       basePath,
       directory,
       htmlFiles,
+      basePathTransform = DEFAULT_TRANSFORM,
       s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
@@ -54,6 +59,7 @@ module.exports = class S3Plugin {
     this.urlMappings = []
     this.uploadTotal = 0
     this.uploadProgress = 0
+    this.basePathTransform = basePathTransform
     basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
 
     this.options = {
@@ -100,7 +106,7 @@ module.exports = class S3Plugin {
         let dPath = this.addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
-          .then(this.filterAndTranslatePathFromFiles(dPath))
+          .then(this.translatePathFromFiles(dPath))
           .then(this.filterAllowedFiles.bind(this))
           .then(this.uploadFiles.bind(this))
           .then(this.changeHtmlUrls.bind(this))
@@ -123,7 +129,7 @@ module.exports = class S3Plugin {
     })
   }
 
-  filterAndTranslatePathFromFiles(rootPath) {
+  translatePathFromFiles(rootPath) {
     return files => {
       return _.map(files, file => {
         return {
@@ -135,6 +141,9 @@ module.exports = class S3Plugin {
   }
 
   addSeperatorToPath(fPath) {
+    if (!fPath)
+      return fPath
+
     return _.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP
   }
 
@@ -257,9 +266,19 @@ module.exports = class S3Plugin {
     this.isConnected = true
   }
 
+  transformBasePath() {
+    return Promise.resolve(this.basePathTransform(this.options.basePath))
+      .then(nPath => this.options.basePath = this.addSeperatorToPath(nPath))
+  }
+
   uploadFiles(files = []) {
+    return this.transformBasePath()
+      .then(() => {
+        var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
+
+        return Promise.all(uploadFiles.map(({promise}) => promise))
+      })
     //var sum = (array) => array.reduce((res, val) => res += val, 0)
-    var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
     //var progressAmount = Array(files.length)
     //var progressTotal = Array(files.length)
 
@@ -277,8 +296,6 @@ module.exports = class S3Plugin {
         //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
       //})
     //})
-
-    return Promise.all(uploadFiles.map(({promise}) => promise))
   }
 
   uploadFile(fileName, file) {

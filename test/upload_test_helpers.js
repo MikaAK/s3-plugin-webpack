@@ -174,6 +174,13 @@ export default {
     return fs.readFileSync(path.resolve(OUTPUT_PATH, file)).toString()
   },
 
+  testForErrorsOrGetFileNames({stats, errors}) {
+    if (errors)
+      return assert.fail([], errors, 'Webpack Build Failed')
+
+    return this.getFilesFromStats(stats)
+  },
+
   assertFileMatches(files) {
     var errors = _(files)
       .map(({expected, actual, name, s3Url}) => assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`))

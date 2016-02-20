@@ -65,14 +65,46 @@ var config = {
 }
 ```
 
+##### With basePathTransform
+```javascript
+import gitsha from 'gitsha'
+
+var addSha = function() {
+  return new Promise(function(resolve, reject) {
+    gitsha(__dirname, function(error, output) {
+      if(error)
+        reject(error)
+      else
+       // resolve to first 5 characters of sha
+       resolve(output.slice(0, 5))
+    }) 
+  })
+}
+
+var config = {
+  plugins: [
+    new S3Plugin({
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket'
+      },
+      basePathTransform: addSha
+    })
+  ]
+}
+
+
+// Will output to /${mySha}/${fileName}
+```
+
 ##### With CloudFront invalidation
 ```javascript
 var config = {
   plugins: [
     new S3Plugin({
-      // Only upload css and js
-      include: /.*\.(css|js)/,
-      // s3Options are required
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
@@ -100,6 +132,7 @@ var config = {
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
+- `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
 
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
