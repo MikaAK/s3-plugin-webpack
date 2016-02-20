@@ -7,7 +7,7 @@ gulp.task('default', ['test', 'build'])
 
 gulp.task('test', function() {
   return gulp.src('test/**/*_test.js', {read: false})
-    .pipe($.mocha({ui: 'bdd'}))
+    .pipe($.mocha({ui: 'bdd', timeout: 5000}))
 })
 
 gulp.task('build', function() {

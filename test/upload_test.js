@@ -91,7 +91,7 @@ describe('S3 Webpack Upload', function() {
       testHelpers.createRandomFile(testHelpers.OUTPUT_PATH),
       testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
     ]
-    var excludeRegex = new RegExp(`${_.pluck(randomFiles, 'fileName').join('|')}`)
+    var excludeRegex = new RegExp(`${_.map(randomFiles, 'fileName').join('|')}`)
     var s3Config = {
       exclude: excludeRegex
     }

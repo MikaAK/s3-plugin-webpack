@@ -29,6 +29,6 @@ export default {
 
   cloudfrontInvalidateOptions: {
     DistributionId: CLOUDFRONT_DISTRIBUTION_ID,
-    Items: ["/*"]
+    Items: ['/*']
   }
 }
