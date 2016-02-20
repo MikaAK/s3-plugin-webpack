@@ -152,7 +152,7 @@ export default {
   },
 
   getFilesFromStats(stats) {
-    return _.pluck(stats.toJson().assets, 'name')
+    return _.map(stats.toJson().assets, 'name')
   },
 
   getBuildFilesFromS3(files) {
@@ -180,7 +180,7 @@ export default {
       .compact()
       .value()
 
-    return Promise.all(_.any(errors) ? errors : files)
+    return Promise.all(_.some(errors) ? errors : files)
   },
 
   getCloudfrontInvalidateOptions() {

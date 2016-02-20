@@ -80,7 +80,7 @@ module.exports = class S3Plugin {
 
     var isDirectoryUpload = !!this.options.directory,
         hasRequiredOptions = this.client.s3.config.credentials !== null,
-        hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(type => this.uploadOptions[type])
+        hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
     this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.'
@@ -98,6 +98,7 @@ module.exports = class S3Plugin {
 
       if (isDirectoryUpload) {
         let dPath = this.addSeperatorToPath(this.options.directory)
+
         this.getAllFilesRecursive(dPath)
           .then(this.filterAndTranslatePathFromFiles(dPath))
           .then(this.filterAllowedFiles.bind(this))
@@ -124,7 +125,7 @@ module.exports = class S3Plugin {
 
   filterAndTranslatePathFromFiles(rootPath) {
     return files => {
-      return files.map(file => {
+      return _.map(files, file => {
         return {
           path: file,
           name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
@@ -134,7 +135,7 @@ module.exports = class S3Plugin {
   }
 
   addSeperatorToPath(fPath) {
-    return fPath.endsWith(PATH_SEP) ? fPath : fPath + PATH_SEP
+    return _.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP
   }
 
   getAllFilesRecursive(fPath) {
@@ -153,7 +154,7 @@ module.exports = class S3Plugin {
           if (!file)
             return resolve(results)
 
-          file = (fPath.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? fPath : fPath + PATH_SEP) + file
+          file = (_.endsWith(fPath, PATH_SEP) || _.startsWith(file, PATH_SEP) ? fPath : fPath + PATH_SEP) + file
 
           fs.stat(file, (err, stat) => {
             if (stat && stat.isDirectory()) {
@@ -177,14 +178,14 @@ module.exports = class S3Plugin {
   }
 
   getFileName(file = '') {
-    return file.includes(PATH_SEP) ? file.substring(file.lastIndexOf(PATH_SEP) + 1) : file
+    return _.includes(file, PATH_SEP) ? file.substring(_.lastIndexOf(file, PATH_SEP) + 1) : file
   }
 
   getAssetFiles({chunks, options}) {
     var outputPath = options.output.path
 
     var files = _(chunks)
-      .pluck('files')
+      .map('files')
       .flatten()
       .map(name => ({path: path.resolve(outputPath, name), name}))
       .value()

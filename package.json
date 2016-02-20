@@ -31,7 +31,7 @@
   "dependencies": {
     "aws-sdk": "~2.0.31",
     "cdnizer": "^1.1.5",
-    "lodash": "^3.10.1",
+    "lodash": "^4.5.0",
     "progress": "^1.1.8",
     "s3": "^4.4.0"
   },
@@ -47,8 +47,6 @@
     "gulp-eslint": "^1.1.1",
     "gulp-load-plugins": "^1.1.0",
     "gulp-mocha": "^2.2.0",
-    "html-webpack-plugin": "^1.7.0",
-    "mocha": "^2.3.4",
-    "webpack": "^1.12.9"
+    "mocha": "^2.3.4"
   }
 }
