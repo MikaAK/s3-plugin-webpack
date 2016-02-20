@@ -60,6 +60,10 @@ var PATH_SEP = _path2.default.sep;
 
 var S3_PATH_SEP = '/';
 
+var compileError = function compileError(compilation, error) {
+  compilation.errors.push(new Error(error));
+};
+
 module.exports = (function () {
   function S3Plugin() {
     var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
@@ -116,7 +120,7 @@ module.exports = (function () {
 
       var isDirectoryUpload = !!this.options.directory,
           hasRequiredOptions = this.client.s3.config.credentials !== null,
-          hasRequiredUploadOpts = REQUIRED_S3_UP_OPTS.every(function (type) {
+          hasRequiredUploadOpts = _lodash2.default.every(REQUIRED_S3_UP_OPTS, function (type) {
         return _this.uploadOptions[type];
       });
 
@@ -125,28 +129,29 @@ module.exports = (function () {
 
       compiler.plugin('after-emit', function (compilation, cb) {
         if (!hasRequiredOptions) {
-          compilation.errors.push(new Error('S3Plugin: Must provide ' + REQUIRED_S3_OPTS.join(', ')));
+          compileError(compilation, 'S3Plugin: Must provide ' + REQUIRED_S3_OPTS.join(', '));
           cb();
         }
 
         if (!hasRequiredUploadOpts) {
-          compilation.errors.push(new Error('S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', ')));
+          compileError(compilation, 'S3Plugin-RequiredS3UploadOpts: ' + REQUIRED_S3_UP_OPTS.join(', '));
           cb();
         }
 
         if (isDirectoryUpload) {
           var dPath = _this.addSeperatorToPath(_this.options.directory);
+
           _this.getAllFilesRecursive(dPath).then(_this.filterAndTranslatePathFromFiles(dPath)).then(_this.filterAllowedFiles.bind(_this)).then(_this.uploadFiles.bind(_this)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
-            compilation.errors.push(new Error('S3Plugin: ' + e));
+            compileError(compilation, 'S3Plugin: ' + e);
             cb();
           });
         } else {
           _this.uploadFiles(_this.getAssetFiles(compilation)).then(_this.changeHtmlUrls.bind(_this)).then(_this.invalidateCloudfront.bind(_this)).then(function () {
             return cb();
           }).catch(function (e) {
-            compilation.errors.push(new Error('S3Plugin: ' + e));
+            compileError(compilation, 'S3Plugin: ' + e);
             cb();
           });
         }
@@ -156,7 +161,7 @@ module.exports = (function () {
     key: 'filterAndTranslatePathFromFiles',
     value: function filterAndTranslatePathFromFiles(rootPath) {
       return function (files) {
-        return files.map(function (file) {
+        return _lodash2.default.map(files, function (file) {
           return {
             path: file,
             name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
@@ -167,7 +172,7 @@ module.exports = (function () {
   }, {
     key: 'addSeperatorToPath',
     value: function addSeperatorToPath(fPath) {
-      return fPath.endsWith(PATH_SEP) ? fPath : fPath + PATH_SEP;
+      return _lodash2.default.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP;
     }
   }, {
     key: 'getAllFilesRecursive',
@@ -189,7 +194,7 @@ module.exports = (function () {
 
             if (!file) return resolve(results);
 
-            file = (fPath.endsWith(PATH_SEP) || file.startsWith(PATH_SEP) ? fPath : fPath + PATH_SEP) + file;
+            file = (_lodash2.default.endsWith(fPath, PATH_SEP) || _lodash2.default.startsWith(file, PATH_SEP) ? fPath : fPath + PATH_SEP) + file;
 
             _fs2.default.stat(file, function (err, stat) {
               if (stat && stat.isDirectory()) {
@@ -218,7 +223,7 @@ module.exports = (function () {
     value: function getFileName() {
       var file = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
 
-      return file.includes(PATH_SEP) ? file.substring(file.lastIndexOf(PATH_SEP) + 1) : file;
+      return _lodash2.default.includes(file, PATH_SEP) ? file.substring(_lodash2.default.lastIndexOf(file, PATH_SEP) + 1) : file;
     }
   }, {
     key: 'getAssetFiles',
@@ -228,7 +233,7 @@ module.exports = (function () {
 
       var outputPath = options.output.path;
 
-      var files = (0, _lodash2.default)(chunks).pluck('files').flatten().map(function (name) {
+      var files = (0, _lodash2.default)(chunks).map('files').flatten().map(function (name) {
         return { path: _path2.default.resolve(outputPath, name), name: name };
       }).value();
 
