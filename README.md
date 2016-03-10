@@ -15,6 +15,7 @@ $ npm i webpack-s3-plugin
 Note: This plugin needs NodeJS > 0.12.0
 
 ### Usage Instructions
+> I notice a lot of people are setting the directory option when the files are part of their build. Please don't set   directory if your uploading your build. Using the directory option reads the files after compilation to upload instead of from the build process. 
 
 ##### Require `webpack-s3-plugin`
 ```javascript
