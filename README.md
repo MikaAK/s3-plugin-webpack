@@ -130,9 +130,21 @@ var config = {
 - `basePath`: Provide the namespace where upload files on S3
 - `directory`: Provide a directory to upload (if not supplied will upload js/css from compilation)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
+- `cdnizerCss`: Config for css cdnizer check below
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
+
+###### cdnizerCss
+
+This allows you to cdnize urls inside your css
+provide `cdnizerCss`a config like this
+```
+{
+  test: /images/,
+  cdnUrl: 'http://images.myCompany.com'
+}
+```
 
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`

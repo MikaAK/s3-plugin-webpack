@@ -106,20 +106,18 @@ module.exports = class S3Plugin {
         let dPath = this.addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
-          .then(this.translatePathFromFiles(dPath))
-          .then(this.filterAllowedFiles.bind(this))
-          .then(this.uploadFiles.bind(this))
-          .then(this.changeHtmlUrls.bind(this))
-          .then(this.invalidateCloudfront.bind(this))
+          .then((files) => this.changeHtmlUrls(files))
+          .then((files) => this.uploadFiles(files))
+          .then(() => this.invalidateCloudfront())
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
             cb()
           })
       } else {
-        this.uploadFiles(this.getAssetFiles(compilation))
-          .then(this.changeHtmlUrls.bind(this))
-          .then(this.invalidateCloudfront.bind(this))
+        this.changeHtmlUrls(this.getAssetFiles(compilation))
+          .then((files) => this.uploadFiles(files))
+          .then(() => this.invalidateCloudfront())
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
@@ -180,6 +178,8 @@ module.exports = class S3Plugin {
         }).call(this)
       })
     })
+      .then(this.translatePathFromFiles(fPath))
+      .then((files) => this.filterAllowedFiles(files))
   }
 
   addPathToFiles(files, fPath) {
@@ -232,6 +232,15 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
+  }
+  
+  changeCssUrls(files = []) {
+    if (this.noCdnizer)
+      return Promise.resolve(files)
+
+    data.replace(/url\(\/images/g, `url(${imagePath}`)
+
+    return this.cdnizeCss(cssFile2, imagePath, files)
   }
 
   filterAllowedFiles(files) {
