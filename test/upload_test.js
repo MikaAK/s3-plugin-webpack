@@ -5,7 +5,7 @@ import {assert} from 'chai'
 
 const CONTEXT = __dirname
 
-var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
+const assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
     testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers),
     testForErrorsOrGetFileNames = testHelpers.testForErrorsOrGetFileNames.bind(testHelpers)
 
@@ -14,6 +14,7 @@ var assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
 // because it would fire if an assertion failed in a .then
 describe('S3 Webpack Upload', function() {
   beforeEach(testHelpers.cleanOutputDirectory)
+
   describe('With directory', function() {
     var s3Config,
         config,
@@ -34,16 +35,18 @@ describe('S3 Webpack Upload', function() {
     })
 
     it('uploads directory recursivly to s3', function() {
-      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
-      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
-      testHelpers.createFolder(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested2'))
+     const createPath = (...fPath) => path.resolve(testHelpers.OUTPUT_PATH, ...fPath)
 
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply'))
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested'))
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder'))
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested', 'folder2'))
-      testHelpers.createRandomFile(path.resolve(testHelpers.OUTPUT_PATH, 'deeply', 'nested2'))
+      testHelpers.createFolder(createPath('deeply', 'nested', 'folder'))
+      testHelpers.createFolder(createPath('deeply', 'nested', 'folder2'))
+      testHelpers.createFolder(createPath('deeply', 'nested2'))
+
+      testHelpers.createRandomFile(createPath('deeply'))
+      testHelpers.createRandomFile(createPath('deeply', 'nested'))
+      testHelpers.createRandomFile(createPath('deeply', 'nested', 'folder'))
+      testHelpers.createRandomFile(createPath('deeply', 'nested', 'folder2'))
+      testHelpers.createRandomFile(createPath('deeply', 'nested', 'folder2'))
+      testHelpers.createRandomFile(createPath('deeply', 'nested2'))
 
       return testHelpers.runWebpackConfig({config, s3Config})
         .then(testS3Upload)

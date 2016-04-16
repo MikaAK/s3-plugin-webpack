@@ -3,35 +3,25 @@ import https from 'https'
 import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
-//import ProgressBar from 'progress'
+import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
 
+import {
+  addSeperatorToPath,
+  getDirectoryFilesRecursive,
+  UPLOAD_IGNORES,
+  DEFAULT_UPLOAD_OPTIONS,
+  DEFAULT_S3_OPTIONS,
+  REQUIRED_S3_OPTS,
+  REQUIRED_S3_UP_OPTS,
+  PATH_SEP,
+  S3_PATH_SEP,
+  DEFAULT_TRANSFORM ,
+} from './helpers'
+
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
-
-const UPLOAD_IGNORES = [
-  '.DS_Store'
-]
-
-const DEFAULT_UPLOAD_OPTIONS = {
-  ACL: 'public-read'
-}
-
-const DEFAULT_S3_OPTIONS = {
-  region: 'us-west-2'
-}
-
-const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey'],
-      REQUIRED_S3_UP_OPTS = ['Bucket']
-
-const PATH_SEP = path.sep
-
-const S3_PATH_SEP = '/'
-
-const DEFAULT_TRANSFORM = function(item) {
-  return Promise.resolve(item)
-}
 
 var compileError = function(compilation, error) {
   compilation.errors.push(new Error(error))
@@ -103,23 +93,22 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        let dPath = this.addSeperatorToPath(this.options.directory)
+        let dPath = addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
-          .then(this.translatePathFromFiles(dPath))
-          .then(this.filterAllowedFiles.bind(this))
-          .then(this.uploadFiles.bind(this))
-          .then(this.changeHtmlUrls.bind(this))
-          .then(this.invalidateCloudfront.bind(this))
+          .then((files) => this.changeUrls(files))
+          .then((files) => this.uploadFiles(files))
+          .then(() => this.invalidateCloudfront())
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
             cb()
           })
       } else {
-        this.uploadFiles(this.getAssetFiles(compilation))
-          .then(this.changeHtmlUrls.bind(this))
-          .then(this.invalidateCloudfront.bind(this))
+        this.getAssetFiles(compilation)
+          .then((files) => this.changeUrls(files))
+          .then((files) => this.uploadFiles(files))
+          .then(() => this.invalidateCloudfront())
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
@@ -129,110 +118,73 @@ module.exports = class S3Plugin {
     })
   }
 
-  translatePathFromFiles(rootPath) {
-    return files => {
-      return _.map(files, file => {
-        return {
-          path: file,
-          name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
-        }
-      })
-    }
-  }
-
-  addSeperatorToPath(fPath) {
-    if (!fPath)
-      return fPath
-
-    return _.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP
-  }
-
   getAllFilesRecursive(fPath) {
-    return new Promise((resolve, reject) => {
-      var results = []
-
-      fs.readdir(fPath, (err, list) => {
-        if (err)
-          return reject(err)
-
-        var i = 0;
-
-        (function next() {
-          var file = list[i++]
-
-          if (!file)
-            return resolve(results)
-
-          file = (_.endsWith(fPath, PATH_SEP) || _.startsWith(file, PATH_SEP) ? fPath : fPath + PATH_SEP) + file
-
-          fs.stat(file, (err, stat) => {
-            if (stat && stat.isDirectory()) {
-              this.getAllFilesRecursive(file)
-                .then((res) => {
-                  results.push(...res)
-                  next.call(this)
-                })
-            } else {
-              results.push(file)
-              next.call(this)
-            }
-          })
-        }).call(this)
-      })
-    })
+    return getDirectoryFilesRecursive(fPath)
+      .then((files) => this.filterAllowedFiles(files))
   }
 
   addPathToFiles(files, fPath) {
-    return files.map(file => path.resolve(fPath, file))
+    return files.map(file => ({name: file, path: path.resolve(fPath, file)}))
   }
 
   getFileName(file = '') {
     return _.includes(file, PATH_SEP) ? file.substring(_.lastIndexOf(file, PATH_SEP) + 1) : file
   }
 
-  getAssetFiles({chunks, options}) {
-    var outputPath = options.output.path
+  getAssetFiles({assets, options}) {
+    var outputPath = options.output.path,
+        files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
 
-    var files = _(chunks)
-      .map('files')
-      .flatten()
-      .map(name => ({path: path.resolve(outputPath, name), name}))
-      .value()
-
-    return this.filterAllowedFiles(files)
+    return Promise.resolve(this.filterAllowedFiles(files))
   }
 
-  cdnizeHtml(htmlPath) {
+  cdnizeHtml(file) {
     return new Promise((resolve, reject) => {
-      fs.readFile(htmlPath, (err, data) => {
+      fs.readFile(file.path, (err, data) => {
         if (err)
           return reject(err)
 
-        fs.writeFile(htmlPath, this.cdnizer(data.toString()), function(err) {
+        fs.writeFile(file.path, this.cdnizer(data.toString()), (err) => {
           if (err)
             return reject(err)
 
-          resolve()
+          resolve(file)
         })
       })
     })
   }
 
-  changeHtmlUrls() {
+  changeUrls(files = []) {
     if (this.noCdnizer)
-      return Promise.resolve()
+      return Promise.resolve(files)
 
     var allHtml,
-        {directory, htmlFiles} = this.options
+        promise,
+        {directory, htmlFiles = []} = this.options
 
-    htmlFiles = htmlFiles || fs.readdirSync(directory).filter(file => /\.html$/.test(file))
-
-    allHtml = this.addPathToFiles(htmlFiles, directory)
-
+    allHtml = htmlFiles.length ? this.addPathToFiles(htmlFiles, directory).concat(files) : files
+    this.cdnizerOptions.files = allHtml.map(({name}) => `*${name}*`)
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
-    return Promise.all(allHtml.map(file => this.cdnizeHtml(file)))
+    promise = _(allHtml)
+      .filter((file) => /\.(html|css)/.test(file.name))
+      .uniq('name')
+      .map((file) => this.cdnizeHtml(file))
+      .value()
+
+      
+    return Promise.all(promise)
   }
+  
+  // For future implimentation
+  // changeCssUrls(files = []) {
+    // if (this.noCdnizer)
+      // return Promise.resolve(files)
+
+    // data.replace(/url\(\/images/g, `url(${imagePath}`)
+
+    // return this.cdnizeCss(cssFile2, imagePath, files)
+  // }
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
@@ -268,34 +220,49 @@ module.exports = class S3Plugin {
 
   transformBasePath() {
     return Promise.resolve(this.basePathTransform(this.options.basePath))
-      .then(nPath => this.options.basePath = this.addSeperatorToPath(nPath))
+      .then(nPath => this.options.basePath = addSeperatorToPath(nPath))
   }
 
+  setupProgressBar(uploadFiles) {
+    var progressAmount = Array(uploadFiles.length)
+    var progressTotal = Array(uploadFiles.length)
+    var countUndefined = (array) => _.reduce(array, (res, value) => res += _.isUndefined(value) ? 1 : 0, 0)
+    var calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
+    var progressTracker = 0
+
+    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+      complete: '>',
+      incomplete: '∆',
+      total: 100
+    })
+
+    uploadFiles.forEach(function({upload}, i) {
+      upload.on('progress', function() {
+        var definedModifier,
+            progressValue
+
+        progressTotal[i] = this.progressTotal
+        progressAmount[i] = this.progressAmount
+        definedModifier = countUndefined(progressTotal) / 10
+        progressValue = calculateProgress() - definedModifier
+
+        if (progressValue !== progressTracker) {
+          progressBar.update(progressValue)
+          progressTracker = progressValue
+        }
+      })
+    })
+  }
+  
   uploadFiles(files = []) {
     return this.transformBasePath()
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
+        this.setupProgressBar(uploadFiles)
+
         return Promise.all(uploadFiles.map(({promise}) => promise))
       })
-    //var sum = (array) => array.reduce((res, val) => res += val, 0)
-    //var progressAmount = Array(files.length)
-    //var progressTotal = Array(files.length)
-
-    //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '∆',
-      //total: 100
-    //})
-
-    //uploadFiles.forEach(function({upload}, i) {
-      //upload.on('progress', function() {
-        //progressTotal[i] = this.progressTotal
-        //progressAmount[i] = this.progressAmount
-
-        //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
-      //})
-    //})
   }
 
   uploadFile(fileName, file) {
@@ -314,7 +281,7 @@ module.exports = class S3Plugin {
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    var promise = new Promise(function(resolve, reject) {
+    var promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
       upload.on('end', () => resolve(file))
     })
