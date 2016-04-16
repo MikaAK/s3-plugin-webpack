@@ -35,7 +35,7 @@ describe('S3 Webpack Upload', function() {
     })
 
     it('uploads directory recursivly to s3', function() {
-      const createPath = (...fPath) => path.resolve(testHelpers.OUTPUT_PATH, ...fPath)
+     const createPath = (...fPath) => path.resolve(testHelpers.OUTPUT_PATH, ...fPath)
 
       testHelpers.createFolder(createPath('deeply', 'nested', 'folder'))
       testHelpers.createFolder(createPath('deeply', 'nested', 'folder2'))

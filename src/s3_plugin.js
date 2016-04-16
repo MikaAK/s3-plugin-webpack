@@ -3,7 +3,7 @@ import https from 'https'
 import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
-//import ProgressBar from 'progress'
+import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
@@ -176,14 +176,15 @@ module.exports = class S3Plugin {
     return Promise.all(promise)
   }
   
-  changeCssUrls(files = []) {
-    if (this.noCdnizer)
-      return Promise.resolve(files)
+  // For future implimentation
+  // changeCssUrls(files = []) {
+    // if (this.noCdnizer)
+      // return Promise.resolve(files)
 
-    data.replace(/url\(\/images/g, `url(${imagePath}`)
+    // data.replace(/url\(\/images/g, `url(${imagePath}`)
 
-    return this.cdnizeCss(cssFile2, imagePath, files)
-  }
+    // return this.cdnizeCss(cssFile2, imagePath, files)
+  // }
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
@@ -222,31 +223,46 @@ module.exports = class S3Plugin {
       .then(nPath => this.options.basePath = addSeperatorToPath(nPath))
   }
 
+  setupProgressBar(uploadFiles) {
+    var progressAmount = Array(uploadFiles.length)
+    var progressTotal = Array(uploadFiles.length)
+    var countUndefined = (array) => _.reduce(array, (res, value) => res += _.isUndefined(value) ? 1 : 0, 0)
+    var calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
+    var progressTracker = 0
+
+    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+      complete: '>',
+      incomplete: '∆',
+      total: 100
+    })
+
+    uploadFiles.forEach(function({upload}, i) {
+      upload.on('progress', function() {
+        var definedModifier,
+            progressValue
+
+        progressTotal[i] = this.progressTotal
+        progressAmount[i] = this.progressAmount
+        definedModifier = countUndefined(progressTotal) / 10
+        progressValue = calculateProgress() - definedModifier
+
+        if (progressValue !== progressTracker) {
+          progressBar.update(progressValue)
+          progressTracker = progressValue
+        }
+      })
+    })
+  }
+  
   uploadFiles(files = []) {
     return this.transformBasePath()
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
+        this.setupProgressBar(uploadFiles)
+
         return Promise.all(uploadFiles.map(({promise}) => promise))
       })
-    //var sum = (array) => array.reduce((res, val) => res += val, 0)
-    //var progressAmount = Array(files.length)
-    //var progressTotal = Array(files.length)
-
-    //var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
-      //complete: '>',
-      //incomplete: '∆',
-      //total: 100
-    //})
-
-    //uploadFiles.forEach(function({upload}, i) {
-      //upload.on('progress', function() {
-        //progressTotal[i] = this.progressTotal
-        //progressAmount[i] = this.progressAmount
-
-        //progressBar.update((sum(progressAmount) / sum(progressTotal)).toFixed(2))
-      //})
-    //})
   }
 
   uploadFile(fileName, file) {

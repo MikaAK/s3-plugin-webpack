@@ -14,7 +14,7 @@ const S3_URL = `https://s3-${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKE
       OUTPUT_FILE_NAME = 's3Test',
       OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
       ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
-      BUILD_FAIL_ERROR = 'Webpack Build Failed'
+      createBuildFailError = errors => `Webpack Build Failed ${errors}`
 
 var deleteFolderRecursive = function(path) {
   if (fs.existsSync(path)) {
@@ -69,7 +69,7 @@ export default {
 
   testForFailFromStatsOrGetS3Files({errors, stats}) {
     if (errors)
-      return assert.fail([], errors, BUILD_FAIL_ERROR)
+      return assert.fail([], errors, createBuildFailError(errors))
 
     return this.getBuildFilesFromS3(this.getFilesFromStats(stats))
   },
@@ -79,7 +79,7 @@ export default {
       var basePath = this.addSlashToPath(`${directory}`)
 
       if (errors)
-        return assert.fail([], errors, BUILD_FAIL_ERROR)
+        return assert.fail([], errors, createBuildFailError(errors))
       else
         return this.getBuildFilesFromS3(this.getFilesFromDirectory(directory, basePath))
     }
@@ -176,7 +176,7 @@ export default {
 
   testForErrorsOrGetFileNames({stats, errors}) {
     if (errors)
-      return assert.fail([], errors, `Webpack Build Failed ${errors}`)
+      return assert.fail([], errors, createBuildFailError(errors))
 
     return this.getFilesFromStats(stats)
   },

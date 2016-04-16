@@ -14,6 +14,7 @@ gulp.task('build', function() {
   return gulp.src('src/*')
     .pipe($.eslint())
     .pipe($.babel())
+    .pipe($.concat('s3_plugin.js'))
     .pipe(gulp.dest('dist'))
 })
 
