@@ -176,7 +176,7 @@ export default {
 
   testForErrorsOrGetFileNames({stats, errors}) {
     if (errors)
-      return assert.fail([], errors, 'Webpack Build Failed')
+      return assert.fail([], errors, `Webpack Build Failed ${errors}`)
 
     return this.getFilesFromStats(stats)
   },
