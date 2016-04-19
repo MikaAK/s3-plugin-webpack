@@ -5,7 +5,7 @@
   "main": "dist/s3_plugin.js",
   "scripts": {
     "build": "webpack",
-    "test": "mocha --compilers js:babel-register",
+    "test": "NODE_ENV='test' mocha -t 10000 --compilers js:babel-register",
     "watch": "webpack --watch",
     "prep:major": "npm run build && npm version major",
     "prep:minor": "npm run build && npm version minor",
