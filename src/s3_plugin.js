@@ -114,7 +114,7 @@ module.exports = class S3Plugin {
   }
 
   handleErrors(error, compilation, cb) {
-    compileError(compilation, `S3Plugin: ${e}`)
+    compileError(compilation, `S3Plugin: ${error}`)
     cb()
   }
 
