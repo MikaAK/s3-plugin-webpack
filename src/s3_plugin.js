@@ -17,7 +17,7 @@ import {
   REQUIRED_S3_OPTS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
-  DEFAULT_TRANSFORM ,
+  DEFAULT_TRANSFORM,
 } from './helpers'
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
@@ -132,9 +132,8 @@ module.exports = class S3Plugin {
     return _.includes(file, PATH_SEP) ? file.substring(_.lastIndexOf(file, PATH_SEP) + 1) : file
   }
 
-  getAssetFiles({assets, options}) {
-    var outputPath = options.output.path,
-        files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
+  getAssetFiles({assets}) {
+    var files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
 
     return Promise.resolve(this.filterAllowedFiles(files))
   }
@@ -160,7 +159,6 @@ module.exports = class S3Plugin {
       return Promise.resolve(files)
 
     var allHtml,
-        promise,
         {directory, htmlFiles = []} = this.options
 
     allHtml = htmlFiles.length ? this.addPathToFiles(htmlFiles, directory).concat(files) : files
@@ -252,7 +250,7 @@ module.exports = class S3Plugin {
       })
     })
   }
-  
+
   uploadFiles(files = []) {
     return this.transformBasePath()
       .then(() => {

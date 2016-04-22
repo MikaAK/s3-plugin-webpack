@@ -2,11 +2,10 @@ import path from 'path'
 import {DefinePlugin} from 'webpack'
 
 const CONTEXT = path.resolve(__dirname),
-      {NODE_ENV} = process.env
-
-var createPath = function(nPath) {
-  return path.resolve(CONTEXT, nPath)
-}
+      {NODE_ENV} = process.env,
+      createPath = nPath => path.resolve(CONTEXT, nPath),
+      SRC_PATH = createPath('src'),
+      NODE_MODULES = createPath('node_modules')
 
 var config = {
   context: CONTEXT,
@@ -27,11 +26,17 @@ var config = {
   ],
 
   module: {
+    preLoaders: [{
+      test: /\.js/,
+      loader: 'eslint',
+      include: [SRC_PATH],
+      exclude: [NODE_MODULES]
+    }],
     loaders: [{
       test: /\.js/,
       loader: 'babel',
-      include: [createPath('src'), createPath('test')],
-      exclude: [createPath('node_modules')]
+      include: [SRC_PATH, createPath('test')],
+      exclude: [NODE_MODULES]
     }]
   },
 
