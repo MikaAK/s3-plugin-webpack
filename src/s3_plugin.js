@@ -95,9 +95,7 @@ module.exports = class S3Plugin {
         let dPath = addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
-          .then((files) => this.changeUrls(files))
-          .then((files) => this.uploadFiles(files))
-          .then(() => this.invalidateCloudfront())
+          .then((files) => this.handleFiles(files))
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
@@ -105,9 +103,7 @@ module.exports = class S3Plugin {
           })
       } else {
         this.getAssetFiles(compilation)
-          .then((files) => this.changeUrls(files))
-          .then((files) => this.uploadFiles(files))
-          .then(() => this.invalidateCloudfront())
+          .then((files) => this.handleFiles(files))
           .then(() => cb())
           .catch(e => {
             compileError(compilation, `S3Plugin: ${e}`)
@@ -115,6 +111,12 @@ module.exports = class S3Plugin {
           })
       }
     })
+  }
+
+  handleFiles(files) {
+    return this.changeUrls(files)
+      .then((files) => this.uploadFiles(files))
+      .then(() => this.invalidateCloudfront())
   }
 
   getAllFilesRecursive(fPath) {
@@ -252,7 +254,6 @@ module.exports = class S3Plugin {
   }
   
   uploadFiles(files = []) {
-    console.log(files)
     return this.transformBasePath()
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
