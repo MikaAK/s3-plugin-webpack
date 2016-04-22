@@ -17,7 +17,6 @@ import {
   REQUIRED_S3_OPTS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
-  S3_PATH_SEP,
   DEFAULT_TRANSFORM ,
 } from './helpers'
 
@@ -166,24 +165,22 @@ module.exports = class S3Plugin {
     this.cdnizerOptions.files = allHtml.map(({name}) => `*${name}*`)
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
-    promise = _(allHtml)
-      .filter((file) => /\.(html|css)/.test(file.name))
+    var [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
-      .map((file) => this.cdnizeHtml(file))
+      .partition((file) => /\.(html)/.test(file.name)) // |css - Add when cdnize css is done
       .value()
 
-      
-    return Promise.all(promise)
+    return Promise.all(cdnizeFiles.map(file => this.cdnizeHtml(file)).concat(otherFiles))
   }
-  
+
   // For future implimentation
   // changeCssUrls(files = []) {
-    // if (this.noCdnizer)
-      // return Promise.resolve(files)
+  //   if (this.noCdnizer)
+  //     return Promise.resolve(files)
 
-    // data.replace(/url\(\/images/g, `url(${imagePath}`)
+  //   data.replace(/url\(\/images/g, `url(${imagePath}`)
 
-    // return this.cdnizeCss(cssFile2, imagePath, files)
+  //   return this.cdnizeCss(cssFile2, imagePath, files)
   // }
 
   filterAllowedFiles(files) {
@@ -255,6 +252,7 @@ module.exports = class S3Plugin {
   }
   
   uploadFiles(files = []) {
+    console.log(files)
     return this.transformBasePath()
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))

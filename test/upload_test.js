@@ -68,6 +68,54 @@ describe('S3 Webpack Upload', function() {
         .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
         .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
     })
+})
+
+  describe('basePathTransform', function() {
+    it('can transform base path with promise', function() {
+      var NAME_PREFIX = 'TEST112233',
+          BASE_PATH = 'test'
+      var s3Config = {
+        basePath: BASE_PATH,
+        basePathTransform(basePath) {
+          return Promise.resolve(`${basePath}${NAME_PREFIX}`)
+        }
+      }
+      var config = testHelpers.createWebpackConfig({s3Config})
+
+      return testHelpers.runWebpackConfig({config})
+        .then(testForErrorsOrGetFileNames)
+        .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
+        .then(([fileName]) => {
+          return Promise.all([
+            testHelpers.readFileFromOutputDir(fileName),
+            testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
+          ])
+        })
+        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+    })
+
+    it('can transform base path without promise', function() {
+      var NAME_PREFIX = 'TEST112233',
+          BASE_PATH = 'test'
+      var s3Config = {
+        basePath: BASE_PATH,
+        basePathTransform(basePath) {
+          return `${basePath}${NAME_PREFIX}`
+        }
+      }
+      var config = testHelpers.createWebpackConfig({s3Config})
+
+      return testHelpers.runWebpackConfig({config})
+        .then(testForErrorsOrGetFileNames)
+        .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
+        .then(([fileName]) => {
+          return Promise.all([
+            testHelpers.readFileFromOutputDir(fileName),
+            testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
+          ])
+        })
+        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+    })
   })
 
   it('starts a CloudFront invalidation', function() {
@@ -134,51 +182,5 @@ describe('S3 Webpack Upload', function() {
 
         return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`)
       })
-  })
-
-  it('can transform base path with promise', function() {
-    var NAME_PREFIX = 'TEST112233',
-        BASE_PATH = 'test'
-    var s3Config = {
-      basePath: BASE_PATH,
-      basePathTransform(basePath) {
-        return Promise.resolve(`${basePath}${NAME_PREFIX}`)
-      }
-    }
-    var config = testHelpers.createWebpackConfig({s3Config})
-
-    return testHelpers.runWebpackConfig({config})
-      .then(testForErrorsOrGetFileNames)
-      .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
-      .then(([fileName]) => {
-        return Promise.all([
-          testHelpers.readFileFromOutputDir(fileName),
-          testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
-        ])
-      })
-      .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
-  })
-
-  it('can transform base path without promise', function() {
-    var NAME_PREFIX = 'TEST112233',
-        BASE_PATH = 'test'
-    var s3Config = {
-      basePath: BASE_PATH,
-      basePathTransform(basePath) {
-        return `${basePath}${NAME_PREFIX}`
-      }
-    }
-    var config = testHelpers.createWebpackConfig({s3Config})
-
-    return testHelpers.runWebpackConfig({config})
-      .then(testForErrorsOrGetFileNames)
-      .then(fileNames => _.filter(fileNames, fileName => /\.js/.test(fileName)))
-      .then(([fileName]) => {
-        return Promise.all([
-          testHelpers.readFileFromOutputDir(fileName),
-          testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
-        ])
-      })
-      .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
   })
 })

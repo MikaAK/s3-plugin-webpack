@@ -56,6 +56,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 	var _http = __webpack_require__(1);
@@ -66,9 +68,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _https2 = _interopRequireDefault(_https);
 
-	var _s = __webpack_require__(3);
+	var _s2 = __webpack_require__(3);
 
-	var _s2 = _interopRequireDefault(_s);
+	var _s3 = _interopRequireDefault(_s2);
 
 	var _fs = __webpack_require__(4);
 
@@ -292,24 +294,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	      });
 	      this.cdnizer = (0, _cdnizer2.default)(this.cdnizerOptions);
 
-	      promise = (0, _lodash2.default)(allHtml).filter(function (file) {
-	        return (/\.(html|css)/.test(file.name)
+	      var _$uniq$partition$valu = (0, _lodash2.default)(allHtml).uniq('name').partition(function (file) {
+	        return (/\.(html)/.test(file.name)
 	        );
-	      }).uniq('name').map(function (file) {
-	        return _this4.cdnizeHtml(file);
-	      }).value();
+	      }) // |css - Add when cdnize css is done
+	      .value();
 
-	      return Promise.all(promise);
+	      var _$uniq$partition$valu2 = _slicedToArray(_$uniq$partition$valu, 2);
+
+	      var cdnizeFiles = _$uniq$partition$valu2[0];
+	      var otherFiles = _$uniq$partition$valu2[1];
+
+
+	      return Promise.all(cdnizeFiles.map(function (file) {
+	        return _this4.cdnizeHtml(file);
+	      })); //.concat(otherFiles)
 	    }
 
 	    // For future implimentation
 	    // changeCssUrls(files = []) {
-	    // if (this.noCdnizer)
-	    // return Promise.resolve(files)
+	    //   if (this.noCdnizer)
+	    //     return Promise.resolve(files)
 
-	    // data.replace(/url\(\/images/g, `url(${imagePath}`)
+	    //   data.replace(/url\(\/images/g, `url(${imagePath}`)
 
-	    // return this.cdnizeCss(cssFile2, imagePath, files)
+	    //   return this.cdnizeCss(cssFile2, imagePath, files)
 	    // }
 
 	  }, {
@@ -350,7 +359,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function connect() {
 	      if (this.isConnected) return;
 
-	      this.client = _s2.default.createClient(this.clientConfig);
+	      this.client = _s3.default.createClient(this.clientConfig);
 	      this.isConnected = true;
 	    }
 	  }, {
@@ -408,6 +417,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
+	      console.log(files);
 	      return this.transformBasePath().then(function () {
 	        var uploadFiles = files.map(function (file) {
 	          return _this7.uploadFile(file.name, file.path);
@@ -552,10 +562,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	var _lodash = __webpack_require__(8);
 
 	var _lodash2 = _interopRequireDefault(_lodash);
-
-	var _fs = __webpack_require__(4);
-
-	var _fs2 = _interopRequireDefault(_fs);
 
 	var _path = __webpack_require__(5);
 

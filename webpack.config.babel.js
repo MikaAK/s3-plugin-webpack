@@ -42,7 +42,7 @@ var config = {
     's3',
     'recursive-readdir',
     'progress'
-  ],  
+  ],
 
   resolve: {
     extensions: ['.js','']

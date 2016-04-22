@@ -161,11 +161,13 @@ export default {
 
     return Promise.all(fetchFiles.map(file => this.fetch(S3_URL + file)))
       .then(nFiles => nFiles.map((file, i) => {
+        var fetchFile = fetchFiles[i]
+
         return {
-          name: fetchFiles[i],
-          s3Url: S3_URL + fetchFiles[i],
+          name: fetchFile,
+          s3Url: S3_URL + fetchFile,
           actual: file,
-          expected: this.readFileFromOutputDir(fetchFiles[i])
+          expected: this.readFileFromOutputDir(fetchFile)
         }
       }))
   },
