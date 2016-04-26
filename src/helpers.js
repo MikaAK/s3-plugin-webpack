@@ -24,7 +24,7 @@ export const addSeperatorToPath = (fPath) => {
   if (!fPath)
     return fPath
 
-  return _.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP
+  return _.endsWith(fPath, S3_PATH_SEP) ? fPath : fPath + S3_PATH_SEP
 }
 
 export const translatePathFromFiles = (rootPath) => {

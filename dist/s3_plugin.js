@@ -190,12 +190,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	          var dPath = (0, _helpers.addSeperatorToPath)(_this.options.directory);
 
 	          _this.getAllFilesRecursive(dPath).then(function (files) {
-	            return _this.handleFiles(files);
+	            return _this.handleFiles(files, cb);
 	          }).then(function () {
 	            return cb();
 	          }).catch(function (e) {
-	            compileError(compilation, 'S3Plugin: ' + e);
-	            cb();
+	            return _this.handleErrors(e, compilation, cb);
 	          });
 	        } else {
 	          _this.getAssetFiles(compilation).then(function (files) {
@@ -203,8 +202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }).then(function () {
 	            return cb();
 	          }).catch(function (e) {
-	            compileError(compilation, 'S3Plugin: ' + e);
-	            cb();
+	            return _this.handleErrors(e, compilation, cb);
 	          });
 	        }
 	      });
@@ -219,6 +217,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }).then(function () {
 	        return _this2.invalidateCloudfront();
 	      });
+	    }
+	  }, {
+	    key: 'handleErrors',
+	    value: function handleErrors(error, compilation, cb) {
+	      compileError(compilation, 'S3Plugin: ' + error);
+	      cb();
 	    }
 	  }, {
 	    key: 'getAllFilesRecursive',
@@ -593,7 +597,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var addSeperatorToPath = exports.addSeperatorToPath = function addSeperatorToPath(fPath) {
 	  if (!fPath) return fPath;
 
-	  return _lodash2.default.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP;
+	  return _lodash2.default.endsWith(fPath, S3_PATH_SEP) ? fPath : fPath + S3_PATH_SEP;
 	};
 
 	var translatePathFromFiles = exports.translatePathFromFiles = function translatePathFromFiles(rootPath) {
