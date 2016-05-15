@@ -190,12 +190,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	          var dPath = (0, _helpers.addSeperatorToPath)(_this.options.directory);
 
 	          _this.getAllFilesRecursive(dPath).then(function (files) {
-	            return _this.handleFiles(files);
+	            return _this.handleFiles(files, cb);
 	          }).then(function () {
 	            return cb();
 	          }).catch(function (e) {
-	            compileError(compilation, 'S3Plugin: ' + e);
-	            cb();
+	            return _this.handleErrors(e, compilation, cb);
 	          });
 	        } else {
 	          _this.getAssetFiles(compilation).then(function (files) {
@@ -203,8 +202,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }).then(function () {
 	            return cb();
 	          }).catch(function (e) {
-	            compileError(compilation, 'S3Plugin: ' + e);
-	            cb();
+	            return _this.handleErrors(e, compilation, cb);
 	          });
 	        }
 	      });
@@ -215,19 +213,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this2 = this;
 
 	      return this.changeUrls(files).then(function (files) {
+	        return _this2.filterAllowedFiles(files);
+	      }).then(function (files) {
 	        return _this2.uploadFiles(files);
 	      }).then(function () {
 	        return _this2.invalidateCloudfront();
 	      });
 	    }
 	  }, {
+	    key: 'handleErrors',
+	    value: function handleErrors(error, compilation, cb) {
+	      compileError(compilation, 'S3Plugin: ' + error);
+	      cb();
+	    }
+	  }, {
 	    key: 'getAllFilesRecursive',
 	    value: function getAllFilesRecursive(fPath) {
-	      var _this3 = this;
-
-	      return (0, _helpers.getDirectoryFilesRecursive)(fPath).then(function (files) {
-	        return _this3.filterAllowedFiles(files);
-	      });
+	      return (0, _helpers.getDirectoryFilesRecursive)(fPath);
 	    }
 	  }, {
 	    key: 'addPathToFiles',
@@ -252,18 +254,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return { name: name, path: value.existsAt };
 	      });
 
-	      return Promise.resolve(this.filterAllowedFiles(files));
+	      return Promise.resolve(files);
 	    }
 	  }, {
 	    key: 'cdnizeHtml',
 	    value: function cdnizeHtml(file) {
-	      var _this4 = this;
+	      var _this3 = this;
 
 	      return new Promise(function (resolve, reject) {
 	        _fs2.default.readFile(file.path, function (err, data) {
 	          if (err) return reject(err);
 
-	          _fs2.default.writeFile(file.path, _this4.cdnizer(data.toString()), function (err) {
+	          _fs2.default.writeFile(file.path, _this3.cdnizer(data.toString()), function (err) {
 	            if (err) return reject(err);
 
 	            resolve(file);
@@ -274,7 +276,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'changeUrls',
 	    value: function changeUrls() {
-	      var _this5 = this;
+	      var _this4 = this;
 
 	      var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
@@ -307,7 +309,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	      return Promise.all(cdnizeFiles.map(function (file) {
-	        return _this5.cdnizeHtml(file);
+	        return _this4.cdnizeHtml(file);
 	      }).concat(otherFiles));
 	    }
 
@@ -324,10 +326,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'filterAllowedFiles',
 	    value: function filterAllowedFiles(files) {
-	      var _this6 = this;
+	      var _this5 = this;
 
 	      return files.reduce(function (res, file) {
-	        if (_this6.isIncludeAndNotExclude(file.name) && !_this6.isIgnoredFile(file.name)) res.push(file);
+	        if (_this5.isIncludeAndNotExclude(file.name) && !_this5.isIgnoredFile(file.name)) res.push(file);
 
 	        return res;
 	      }, []);
@@ -365,10 +367,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'transformBasePath',
 	    value: function transformBasePath() {
-	      var _this7 = this;
+	      var _this6 = this;
 
 	      return Promise.resolve(this.basePathTransform(this.options.basePath)).then(function (nPath) {
-	        return _this7.options.basePath = (0, _helpers.addSeperatorToPath)(nPath);
+	        return _this6.options.basePath = (0, _helpers.addSeperatorToPath)(nPath);
 	      });
 	    }
 	  }, {
@@ -413,16 +415,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'uploadFiles',
 	    value: function uploadFiles() {
-	      var _this8 = this;
+	      var _this7 = this;
 
 	      var files = arguments.length <= 0 || arguments[0] === undefined ? [] : arguments[0];
 
 	      return this.transformBasePath().then(function () {
 	        var uploadFiles = files.map(function (file) {
-	          return _this8.uploadFile(file.name, file.path);
+	          return _this7.uploadFile(file.name, file.path);
 	        });
 
-	        _this8.setupProgressBar(uploadFiles);
+	        _this7.setupProgressBar(uploadFiles);
 
 	        return Promise.all(uploadFiles.map(function (_ref4) {
 	          var promise = _ref4.promise;

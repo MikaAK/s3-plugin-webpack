@@ -109,6 +109,7 @@ module.exports = class S3Plugin {
 
   handleFiles(files) {
     return this.changeUrls(files)
+      .then((files) => this.filterAllowedFiles(files))
       .then((files) => this.uploadFiles(files))
       .then(() => this.invalidateCloudfront())
   }
@@ -120,7 +121,6 @@ module.exports = class S3Plugin {
 
   getAllFilesRecursive(fPath) {
     return getDirectoryFilesRecursive(fPath)
-      .then((files) => this.filterAllowedFiles(files))
   }
 
   addPathToFiles(files, fPath) {
@@ -134,7 +134,7 @@ module.exports = class S3Plugin {
   getAssetFiles({assets}) {
     var files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
 
-    return Promise.resolve(this.filterAllowedFiles(files))
+    return Promise.resolve(files)
   }
 
   cdnizeHtml(file) {
