@@ -3,8 +3,8 @@
 **Please complete these steps and check these boxes (by putting an `x` inside
 the brackets) _before_ filing your issue:**
 
-- [ ] I have read and understood this plugin's [README][readme]
-- [ ] If filing a bug report, I have included my version of node and package version
+- [ ] I have read and understood this plugin's README
+- [ ] If filing a bug report, I have included my version of node and s3-plugin-webpack
 - [ ] If filing a bug report, I have included which OS (including specific OS
   version) I am using.
 - [ ] If filing a bug report, I have included a minimal test case that reproduces
