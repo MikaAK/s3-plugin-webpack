@@ -129,10 +129,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var s3UploadOptions = _options$s3UploadOpti === undefined ? {} : _options$s3UploadOpti;
 	    var _options$cloudfrontIn = options.cloudfrontInvalidateOptions;
 	    var cloudfrontInvalidateOptions = _options$cloudfrontIn === undefined ? {} : _options$cloudfrontIn;
+	    var _options$indexOptions = options.indexOptions;
+	    var indexOptions = _options$indexOptions === undefined ? {} : _options$indexOptions;
+	    var _options$gzipOptions = options.gzipOptions;
+	    var gzipOptions = _options$gzipOptions === undefined ? {} : _options$gzipOptions;
 
 
 	    this.uploadOptions = s3UploadOptions;
 	    this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
+	    this.indexOptions = indexOptions;
+	    this.gzipOptions = gzipOptions;
 	    this.isConnected = false;
 	    this.cdnizerOptions = cdnizerOptions;
 	    this.urlMappings = [];
@@ -218,6 +224,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        return _this2.uploadFiles(files);
 	      }).then(function () {
 	        return _this2.invalidateCloudfront();
+	      }).then(function () {
+	        return _this2.setIndex();
 	      });
 	    }
 	  }, {
@@ -441,6 +449,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // Remove Gzip from encoding if ico
 	      if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
 
+	      if (this.gzipOptions.test) {
+	        if (this.gzipOptions.test.test(fileName)) s3Params.ContentEncoding = 'gzip';
+	      }
+
 	      upload = this.client.uploadFile({
 	        localFile: file,
 	        s3Params: s3Params
@@ -485,6 +497,100 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }, function (err, res) {
 	            return err ? reject(err) : resolve(res.Id);
 	          });
+	        } else {
+	          return resolve(null);
+	        }
+	      });
+	    }
+	  }, {
+	    key: 'setIndex',
+	    value: function setIndex() {
+	      var clientConfig = this.clientConfig;
+	      var uploadOptions = this.uploadOptions;
+	      var cloudfrontInvalidateOptions = this.cloudfrontInvalidateOptions;
+	      var indexOptions = this.indexOptions;
+	      var client = this.client;
+
+
+	      return new Promise(function (resolve, reject) {
+	        if (indexOptions.IndexDocument) {
+
+	          // Cloudfront Index
+	          if (indexOptions.cloudfront) {
+	            var cloudfront = new _awsSdk2.default.CloudFront();
+
+	            cloudfront.config.update({
+	              accessKeyId: clientConfig.s3Options.accessKeyId,
+	              secretAccessKey: clientConfig.s3Options.secretAccessKey
+	            });
+
+	            // Get the existing distribution id
+	            cloudfront.getDistribution({ Id: cloudfrontInvalidateOptions.DistributionId }, function (err, data) {
+	              if (err) {
+	                reject(err);
+	              } else {
+	                if (data.DistributionConfig.DefaultRootObject === indexOptions.IndexDocument) {
+	                  return resolve();
+	                }
+
+	                // Update the distribution with the new default root object
+	                data.DistributionConfig.DefaultRootObject = indexOptions.IndexDocument;
+
+	                cloudfront.updateDistribution({
+	                  IfMatch: data.ETag,
+	                  Id: cloudfrontInvalidateOptions.DistributionId,
+	                  DistributionConfig: data.DistributionConfig
+	                }, function (err, data) {
+	                  if (err) {
+	                    reject(err);
+	                  } else {
+	                    resolve();
+	                  }
+	                });
+	              }
+	            });
+	          }
+	          // S3 Index
+	          if (indexOptions.s3) {
+	            // AWS.config.region = options.region;
+	            var s3Client = new _awsSdk2.default.S3({
+	              params: {
+	                Bucket: uploadOptions.Bucket
+	              },
+	              accessKeyId: clientConfig.s3Options.accessKeyId,
+	              secretAccessKey: clientConfig.s3Options.secretAccessKey,
+	              region: clientConfig.s3Options.region
+	            });
+	            s3Client.getBucketWebsite({}, function (err, data) {
+	              if (err) {
+	                reject(err);
+	              } else {
+	                if (data.IndexDocument.Suffix === indexOptions.IndexDocument) {
+	                  return resolve();
+	                }
+
+	                // Update the distribution with the new default root object
+	                data.IndexDocument.Suffix = indexOptions.IndexDocument;
+
+	                //Remove empty properties
+	                Object.keys(data).forEach(function (k) {
+	                  if (!data[k] || Array.isArray(data[k]) && !data[k].length) {
+	                    delete data[k];
+	                  }
+	                });
+
+	                s3Client.putBucketWebsite({
+	                  WebsiteConfiguration: data
+	                }, function (err) {
+	                  if (err) {
+	                    reject(err);
+	                  } else {
+	                    resolve();
+	                  }
+	                });
+	              }
+	            });
+	          }
 	        } else {
 	          return resolve(null);
 	        }

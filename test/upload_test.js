@@ -138,6 +138,27 @@ describe('S3 Webpack Upload', function() {
       .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
   })
 
+  it('starts a index change', function() {
+    var config,
+        randomFile
+
+    var s3Config = {
+      indexOptions: testHelpers.getIndexOptions(),
+      cloudfrontInvalidateOptions: testHelpers.getCloudfrontInvalidateOptions()
+    }
+
+    config = testHelpers.createWebpackConfig({s3Config})
+
+    testHelpers.createOutputPath()
+    randomFile = testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForFailFromStatsOrGetS3Files)
+      .then(assertFileMatches)
+      .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
+      .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+  })
+
   it('excludes files from `exclude` property', function() {
     testHelpers.createOutputPath()
 
