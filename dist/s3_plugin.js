@@ -139,7 +139,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    this.uploadTotal = 0;
 	    this.uploadProgress = 0;
 	    this.basePathTransform = basePathTransform;
-	    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : '';
+	    basePath = basePath ? (0, _helpers.addTrailingS3Sep)(basePath) : '';
 
 	    this.options = {
 	      directory: directory,
@@ -369,7 +369,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function transformBasePath() {
 	      var _this6 = this;
 
-	      return Promise.resolve(this.basePathTransform(this.options.basePath)).then(function (nPath) {
+	      return Promise.resolve(this.basePathTransform(this.options.basePath)).then(_helpers.addTrailingS3Sep).then(function (nPath) {
 	        return _this6.options.basePath = nPath;
 	      });
 	    }
@@ -558,7 +558,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
-	exports.getDirectoryFilesRecursive = exports.translatePathFromFiles = exports.addSeperatorToPath = exports.DEFAULT_TRANSFORM = exports.S3_PATH_SEP = exports.PATH_SEP = exports.REQUIRED_S3_UP_OPTS = exports.REQUIRED_S3_OPTS = exports.DEFAULT_S3_OPTIONS = exports.DEFAULT_UPLOAD_OPTIONS = exports.UPLOAD_IGNORES = undefined;
+	exports.getDirectoryFilesRecursive = exports.translatePathFromFiles = exports.addSeperatorToPath = exports.addTrailingS3Sep = exports.DEFAULT_TRANSFORM = exports.S3_PATH_SEP = exports.PATH_SEP = exports.REQUIRED_S3_UP_OPTS = exports.REQUIRED_S3_OPTS = exports.DEFAULT_S3_OPTIONS = exports.DEFAULT_UPLOAD_OPTIONS = exports.UPLOAD_IGNORES = undefined;
 
 	var _lodash = __webpack_require__(8);
 
@@ -590,6 +590,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	var S3_PATH_SEP = exports.S3_PATH_SEP = '/';
 	var DEFAULT_TRANSFORM = exports.DEFAULT_TRANSFORM = function DEFAULT_TRANSFORM(item) {
 	  return Promise.resolve(item);
+	};
+
+	var addTrailingS3Sep = exports.addTrailingS3Sep = function addTrailingS3Sep(fPath) {
+	  return fPath ? fPath.replace(/\/?(\?|#|$)/, '/$1') : fPath;
 	};
 
 	var addSeperatorToPath = exports.addSeperatorToPath = function addSeperatorToPath(fPath) {
