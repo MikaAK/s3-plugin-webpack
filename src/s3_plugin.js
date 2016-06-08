@@ -323,91 +323,112 @@ module.exports = class S3Plugin {
     })
   }
 
-  setIndex() {
-    var {clientConfig, uploadOptions, cloudfrontInvalidateOptions, indexOptions, client} = this
-
+  setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions) {
     return new Promise(function(resolve, reject) {
-      if (indexOptions.IndexDocument) {
+      // Setup Cloudfront
+      var cloudfront = new aws.CloudFront()
+      cloudfront.config.update({
+        accessKeyId: clientConfig.s3Options.accessKeyId,
+        secretAccessKey: clientConfig.s3Options.secretAccessKey,
+      });
 
-        // Cloudfront Index
-        if (indexOptions.cloudfront) {
-          var cloudfront = new aws.CloudFront()
+      // Get the existing distribution
+      cloudfront.getDistribution({
+        Id: cloudfrontInvalidateOptions.DistributionId
+      }, (err, data) => {
+        if (err) {
+          reject(err)
+        } else {
+          if (data.DistributionConfig.DefaultRootObject === indexOptions.IndexDocument) {
+            resolve()
+          }
 
-          cloudfront.config.update({
-            accessKeyId: clientConfig.s3Options.accessKeyId,
-            secretAccessKey: clientConfig.s3Options.secretAccessKey,
-          })
+          // Update the distribution with the new default root object
+          data.DistributionConfig.DefaultRootObject = indexOptions.IndexDocument;
 
-          // Get the existing distribution id
-          cloudfront.getDistribution({ Id: cloudfrontInvalidateOptions.DistributionId }, (err, data) => {
+          cloudfront.updateDistribution({
+            IfMatch: data.ETag,
+            Id: cloudfrontInvalidateOptions.DistributionId,
+            DistributionConfig: data.DistributionConfig
+          }, function(err, data) {
             if (err) {
-              reject(err);
+              reject(err)
             } else {
-              if (data.DistributionConfig.DefaultRootObject === indexOptions.IndexDocument) {
-                return resolve();
-              }
-
-              // Update the distribution with the new default root object
-              data.DistributionConfig.DefaultRootObject = indexOptions.IndexDocument;
-
-              cloudfront.updateDistribution({
-                IfMatch: data.ETag,
-                Id: cloudfrontInvalidateOptions.DistributionId,
-                DistributionConfig: data.DistributionConfig
-              }, function(err, data) {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
-              });
+              resolve()
             }
           });
         }
-        // S3 Index
-        if (indexOptions.s3) {
-          // AWS.config.region = options.region;
-          var s3Client = new aws.S3({
-            params: {
-              Bucket: uploadOptions.Bucket,
-            },
-            accessKeyId: clientConfig.s3Options.accessKeyId,
-            secretAccessKey: clientConfig.s3Options.secretAccessKey,
-            region: clientConfig.s3Options.region,
-          })
-          s3Client.getBucketWebsite({}, (err, data) => {
+      });
+    });
+  }
+
+  setS3Index(clientConfig, uploadOptions, indexOptions) {
+    return new Promise(function(resolve, reject) {
+      var s3Client = new aws.S3({
+        params: {
+          Bucket: uploadOptions.Bucket,
+        },
+        accessKeyId: clientConfig.s3Options.accessKeyId,
+        secretAccessKey: clientConfig.s3Options.secretAccessKey,
+        region: clientConfig.s3Options.region,
+      })
+      s3Client.getBucketWebsite({}, (err, data) => {
+        if (err) {
+          reject(err)
+        } else {
+          if (data.IndexDocument.Suffix === indexOptions.IndexDocument) {
+            resolve()
+          }
+
+          // Update the distribution with the new default root object
+          data.IndexDocument.Suffix = indexOptions.IndexDocument
+
+          //Remove empty properties
+          Object.keys(data).forEach(function (k) {
+            if (!data[k] || (Array.isArray(data[k]) && !data[k].length)) {
+              delete data[k]
+            }
+          });
+
+          s3Client.putBucketWebsite({
+            WebsiteConfiguration: data
+          }, function (err) {
             if (err) {
-              reject(err);
+              reject(err)
             } else {
-              if (data.IndexDocument.Suffix === indexOptions.IndexDocument) {
-                return resolve();
-              }
-
-              // Update the distribution with the new default root object
-              data.IndexDocument.Suffix = indexOptions.IndexDocument;
-
-              //Remove empty properties
-              Object.keys(data).forEach(function (k) {
-                if (!data[k] || (Array.isArray(data[k]) && !data[k].length)) {
-                  delete data[k];
-                }
-              });
-
-              s3Client.putBucketWebsite({
-                WebsiteConfiguration: data
-              }, function (err) {
-                if (err) {
-                  reject(err);
-                } else {
-                  resolve();
-                }
-              });
+              resolve()
             }
           });
         }
-      } else {
-        return resolve(null)
+      });
+    });
+  }
+
+  setIndex() {
+    var {
+      clientConfig,
+      uploadOptions,
+      cloudfrontInvalidateOptions,
+      indexOptions,
+      client,
+    } = this
+
+    var self = this
+
+    if (indexOptions.IndexDocument) {
+      var promises = [];
+      // Cloudfront Index
+      if (indexOptions.cloudfront) {
+        promises.push(self.setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions))
       }
-    })
+      // S3 Index
+      if (indexOptions.s3) {
+        promises.push(self.setS3Index(clientConfig, uploadOptions, indexOptions))
+      }
+
+      return Promise.all(promises)
+    } else {
+      return Promise.resolve();
+    }
   }
 }
