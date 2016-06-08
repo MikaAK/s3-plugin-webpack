@@ -370,7 +370,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var _this6 = this;
 
 	      return Promise.resolve(this.basePathTransform(this.options.basePath)).then(function (nPath) {
-	        return _this6.options.basePath = (0, _helpers.addSeperatorToPath)(nPath);
+	        return _this6.options.basePath = nPath;
 	      });
 	    }
 	  }, {

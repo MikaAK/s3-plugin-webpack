@@ -20,6 +20,8 @@ export const PATH_SEP = path.sep
 export const S3_PATH_SEP = '/'
 export const DEFAULT_TRANSFORM = (item) => Promise.resolve(item)
 
+export const addTrailingS3Sep = fPath =>  fPath ? fPath.replace(/\/?(\?|#|$)/, '/$1') : fPath
+
 export const addSeperatorToPath = (fPath) => {
   if (!fPath)
     return fPath
