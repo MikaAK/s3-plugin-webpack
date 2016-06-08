@@ -10,6 +10,7 @@ import aws from 'aws-sdk'
 
 import {
   addSeperatorToPath,
+  addTrailingS3Sep,
   getDirectoryFilesRecursive,
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
@@ -49,7 +50,7 @@ module.exports = class S3Plugin {
     this.uploadTotal = 0
     this.uploadProgress = 0
     this.basePathTransform = basePathTransform
-    basePath = basePath ? basePath.replace(/\/?(\?|#|$)/, '/$1') : ''
+    basePath = basePath ? addTrailingS3Sep(basePath) : ''
 
     this.options = {
       directory,
@@ -216,7 +217,8 @@ module.exports = class S3Plugin {
 
   transformBasePath() {
     return Promise.resolve(this.basePathTransform(this.options.basePath))
-      .then(nPath => this.options.basePath = addSeperatorToPath(nPath))
+      .then(addTrailingS3Sep)
+      .then(nPath => this.options.basePath = nPath)
   }
 
   setupProgressBar(uploadFiles) {

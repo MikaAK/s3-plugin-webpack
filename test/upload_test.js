@@ -68,6 +68,22 @@ describe('S3 Webpack Upload', function() {
         .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
         .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
     })
+
+    it('uploads build to s3 with basePath', function() {
+      const BASE_PATH = 'test'
+      const s3Config = {basePath : BASE_PATH}
+
+      var randomFile,
+          config = testHelpers.createWebpackConfig({s3Config})
+
+      testHelpers.createOutputPath()
+      randomFile = testHelpers.createRandomFile(testHelpers.OUTPUT_PATH)
+
+      return testHelpers.runWebpackConfig({config})
+        .then(testForErrorsOrGetFileNames)
+        .then(() => testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${randomFile.fileName}`))
+        .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+    })
 })
 
   describe('basePathTransform', function() {
@@ -77,7 +93,7 @@ describe('S3 Webpack Upload', function() {
       var s3Config = {
         basePath: BASE_PATH,
         basePathTransform(basePath) {
-          return Promise.resolve(`${basePath}${NAME_PREFIX}`)
+          return Promise.resolve(basePath + NAME_PREFIX)
         }
       }
       var config = testHelpers.createWebpackConfig({s3Config})
@@ -91,7 +107,7 @@ describe('S3 Webpack Upload', function() {
             testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
           ])
         })
-        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+        .then(([localFile, remoteFile]) => (assert.equal(remoteFile, localFile, 'basepath and prefixes added')))
     })
 
     it('can transform base path without promise', function() {
@@ -100,7 +116,7 @@ describe('S3 Webpack Upload', function() {
       var s3Config = {
         basePath: BASE_PATH,
         basePathTransform(basePath) {
-          return `${basePath}${NAME_PREFIX}`
+          return basePath + NAME_PREFIX
         }
       }
       var config = testHelpers.createWebpackConfig({s3Config})
