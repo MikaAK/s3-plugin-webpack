@@ -599,7 +599,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	var addSeperatorToPath = exports.addSeperatorToPath = function addSeperatorToPath(fPath) {
 	  if (!fPath) return fPath;
 
-	  return _lodash2.default.endsWith(fPath, PATH_SEP) ? fPath : fPath + PATH_SEP;
+	  return _lodash2.default.endsWith(fPath, S3_PATH_SEP) ? fPath : fPath + S3_PATH_SEP;
 	};
 
 	var translatePathFromFiles = exports.translatePathFromFiles = function translatePathFromFiles(rootPath) {
