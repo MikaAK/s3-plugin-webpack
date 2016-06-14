@@ -133,12 +133,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var indexOptions = _options$indexOptions === undefined ? {} : _options$indexOptions;
 	    var _options$gzipOptions = options.gzipOptions;
 	    var gzipOptions = _options$gzipOptions === undefined ? {} : _options$gzipOptions;
+	    var _options$cacheOptions = options.cacheOptions;
+	    var cacheOptions = _options$cacheOptions === undefined ? {} : _options$cacheOptions;
 
 
 	    this.uploadOptions = s3UploadOptions;
 	    this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions;
 	    this.indexOptions = indexOptions;
 	    this.gzipOptions = gzipOptions;
+	    this.cacheOptions = cacheOptions;
 	    this.isConnected = false;
 	    this.cdnizerOptions = cdnizerOptions;
 	    this.urlMappings = [];
@@ -453,6 +456,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        if (this.gzipOptions.test.test(fileName)) s3Params.ContentEncoding = 'gzip';
 	      }
 
+	      if (this.cacheOptions.cacheControl) {
+	        s3Params.CacheControl = this.cacheOptions.cacheControl;
+	      }
+
 	      upload = this.client.uploadFile({
 	        localFile: file,
 	        s3Params: s3Params
@@ -504,7 +511,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 	  }, {
 	    key: 'setCloudfrontIndex',
-	    value: function setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions) {
+	    value: function setCloudfrontIndex(clientConfig, indexOptions) {
 	      return new Promise(function (resolve, reject) {
 	        // Setup Cloudfront
 	        var cloudfront = new _awsSdk2.default.CloudFront();
@@ -515,7 +522,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        // Get the existing distribution
 	        cloudfront.getDistribution({
-	          Id: cloudfrontInvalidateOptions.DistributionId
+	          Id: indexOptions.DistributionId
 	        }, function (err, data) {
 	          if (err) {
 	            reject(err);
@@ -529,7 +536,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	            cloudfront.updateDistribution({
 	              IfMatch: data.ETag,
-	              Id: cloudfrontInvalidateOptions.DistributionId,
+	              Id: indexOptions.DistributionId,
 	              DistributionConfig: data.DistributionConfig
 	            }, function (err, data) {
 	              if (err) {
@@ -601,7 +608,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        var promises = [];
 	        // Cloudfront Index
 	        if (indexOptions.cloudfront) {
-	          promises.push(self.setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions));
+	          promises.push(self.setCloudfrontIndex(clientConfig, indexOptions));
 	        }
 	        // S3 Index
 	        if (indexOptions.s3) {

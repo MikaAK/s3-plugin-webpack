@@ -40,13 +40,15 @@ module.exports = class S3Plugin {
       s3UploadOptions = {},
       cloudfrontInvalidateOptions = {},
       indexOptions = {},
-      gzipOptions = {}
+      gzipOptions = {},
+      cacheOptions = {}
     } = options
 
     this.uploadOptions = s3UploadOptions
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
     this.indexOptions = indexOptions
     this.gzipOptions = gzipOptions
+    this.cacheOptions = cacheOptions
     this.isConnected = false
     this.cdnizerOptions = cdnizerOptions
     this.urlMappings = []
@@ -274,9 +276,13 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    if(this.gzipOptions.test) {
+    if (this.gzipOptions.test) {
       if (this.gzipOptions.test.test(fileName))
         s3Params.ContentEncoding = 'gzip';
+    }
+
+    if (this.cacheOptions.cacheControl) {
+      s3Params.CacheControl = this.cacheOptions.cacheControl;
     }
 
     upload = this.client.uploadFile({
@@ -323,7 +329,7 @@ module.exports = class S3Plugin {
     })
   }
 
-  setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions) {
+  setCloudfrontIndex(clientConfig, indexOptions) {
     return new Promise(function(resolve, reject) {
       // Setup Cloudfront
       var cloudfront = new aws.CloudFront()
@@ -334,7 +340,7 @@ module.exports = class S3Plugin {
 
       // Get the existing distribution
       cloudfront.getDistribution({
-        Id: cloudfrontInvalidateOptions.DistributionId
+        Id: indexOptions.DistributionId
       }, (err, data) => {
         if (err) {
           reject(err)
@@ -348,7 +354,7 @@ module.exports = class S3Plugin {
 
           cloudfront.updateDistribution({
             IfMatch: data.ETag,
-            Id: cloudfrontInvalidateOptions.DistributionId,
+            Id: indexOptions.DistributionId,
             DistributionConfig: data.DistributionConfig
           }, function(err, data) {
             if (err) {
@@ -419,7 +425,7 @@ module.exports = class S3Plugin {
       var promises = [];
       // Cloudfront Index
       if (indexOptions.cloudfront) {
-        promises.push(self.setCloudfrontIndex(clientConfig, cloudfrontInvalidateOptions, indexOptions))
+        promises.push(self.setCloudfrontIndex(clientConfig, indexOptions))
       }
       // S3 Index
       if (indexOptions.s3) {
