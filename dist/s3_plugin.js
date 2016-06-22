@@ -441,6 +441,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // Remove Gzip from encoding if ico
 	      if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
 
+	      _lodash2.default.forEach(s3Params, function (value, key) {
+	        if (_lodash2.default.isFunction(value)) {
+	          s3Params[key] = value(fileName, file);
+	        }
+	      });
+
 	      upload = this.client.uploadFile({
 	        localFile: file,
 	        s3Params: s3Params
