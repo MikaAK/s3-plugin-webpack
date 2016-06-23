@@ -264,22 +264,19 @@ module.exports = class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    var upload,
-        s3Params = _.merge({Key: this.options.basePath + fileName}, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions)
+    var upload
+
+    const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
+      return _.isFunction(optionConfig) ? optionConfig : optionConfig(fileName, file)
+    })
 
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    _.forEach(s3Params, (value, key) => {
-      if (_.isFunction(value)) {
-        s3Params[key] = value(fileName, file)
-      }
-    })
-
     upload = this.client.uploadFile({
       localFile: file,
-      s3Params
+      s3Params: _.merge({Key: this.options.basePath + fileName}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     })
 
     if (!this.noCdnizer)
