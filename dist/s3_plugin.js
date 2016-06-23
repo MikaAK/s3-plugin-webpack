@@ -176,13 +176,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.';
 
 	      compiler.plugin('after-emit', function (compilation, cb) {
-	        if (!hasRequiredOptions) {
-	          compileError(compilation, 'S3Plugin: Must provide ' + _helpers.REQUIRED_S3_OPTS.join(', '));
-	          cb();
-	        }
+	        var error;
 
-	        if (!hasRequiredUploadOpts) {
-	          compileError(compilation, 'S3Plugin-RequiredS3UploadOpts: ' + _helpers.REQUIRED_S3_UP_OPTS.join(', '));
+	        if (!hasRequiredOptions) error = 'S3Plugin: Must provide ' + _helpers.REQUIRED_S3_OPTS.join(', ');
+
+	        if (!hasRequiredUploadOpts) error = 'S3Plugin-RequiredS3UploadOpts: ' + _helpers.REQUIRED_S3_UP_OPTS.join(', ');
+
+	        if (error) {
+	          compileError(compilation, error);
 	          cb();
 	        }
 
@@ -243,7 +244,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function getFileName() {
 	      var file = arguments.length <= 0 || arguments[0] === undefined ? '' : arguments[0];
 
-	      return _lodash2.default.includes(file, _helpers.PATH_SEP) ? file.substring(_lodash2.default.lastIndexOf(file, _helpers.PATH_SEP) + 1) : file;
+	      if (_lodash2.default.includes(file, _helpers.PATH_SEP)) return file.substring(_lodash2.default.lastIndexOf(file, _helpers.PATH_SEP) + 1);else return file;
 	    }
 	  }, {
 	    key: 'getAssetFiles',
@@ -289,18 +290,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var htmlFiles = _options$htmlFiles === undefined ? [] : _options$htmlFiles;
 
 
-	      allHtml = htmlFiles.length ? this.addPathToFiles(htmlFiles, directory).concat(files) : files;
+	      if (htmlFiles.length) allHtml = this.addPathToFiles(htmlFiles, directory).concat(files);else allHtml = files;
+
 	      this.cdnizerOptions.files = allHtml.map(function (_ref2) {
 	        var name = _ref2.name;
 	        return '*' + name + '*';
 	      });
 	      this.cdnizer = (0, _cdnizer2.default)(this.cdnizerOptions);
 
+	      // Add |css to regex - Add when cdnize css is done
+
 	      var _$uniq$partition$valu = (0, _lodash2.default)(allHtml).uniq('name').partition(function (file) {
 	        return (/\.(html)/.test(file.name)
 	        );
-	      }) // |css - Add when cdnize css is done
-	      .value();
+	      }).value();
 
 	      var _$uniq$partition$valu2 = _slicedToArray(_$uniq$partition$valu, 2);
 
@@ -378,15 +381,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function setupProgressBar(uploadFiles) {
 	      var progressAmount = Array(uploadFiles.length);
 	      var progressTotal = Array(uploadFiles.length);
+	      var calculateProgress = function calculateProgress() {
+	        return _lodash2.default.sum(progressAmount) / _lodash2.default.sum(progressTotal);
+	      };
+	      var progressTracker = 0;
 	      var countUndefined = function countUndefined(array) {
 	        return _lodash2.default.reduce(array, function (res, value) {
 	          return res += _lodash2.default.isUndefined(value) ? 1 : 0;
 	        }, 0);
 	      };
-	      var calculateProgress = function calculateProgress() {
-	        return _lodash2.default.sum(progressAmount) / _lodash2.default.sum(progressTotal);
-	      };
-	      var progressTracker = 0;
 
 	      var progressBar = new _progress2.default('Uploading [:bar] :percent :etas', {
 	        complete: '>',
@@ -437,6 +440,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function uploadFile(fileName, file) {
 	      var upload;
 
+	      var Key = this.options.basePath + fileName;
 	      var s3Params = _lodash2.default.mapValues(this.uploadOptions, function (optionConfig) {
 	        return _lodash2.default.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig;
 	      });
@@ -446,7 +450,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      upload = this.client.uploadFile({
 	        localFile: file,
-	        s3Params: _lodash2.default.merge({ Key: this.options.basePath + fileName }, _helpers.DEFAULT_UPLOAD_OPTIONS, s3Params)
+	        s3Params: _lodash2.default.merge({ Key: Key }, _helpers.DEFAULT_UPLOAD_OPTIONS, s3Params)
 	      });
 
 	      if (!this.noCdnizer) this.cdnizerOptions.files.push('*' + fileName + '*');
