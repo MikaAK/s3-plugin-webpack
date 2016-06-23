@@ -1,13 +1,15 @@
 import _ from 'lodash'
 import path from 'path'
+import S3Opts from './s3_options'
 import testHelpers from './upload_test_helpers'
 import {assert} from 'chai'
+import * as sinon from 'sinon'
 
 const CONTEXT = __dirname
 
 const assertFileMatches = testHelpers.assertFileMatches.bind(testHelpers),
-    testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers),
-    testForErrorsOrGetFileNames = testHelpers.testForErrorsOrGetFileNames.bind(testHelpers)
+      testForFailFromStatsOrGetS3Files = testHelpers.testForFailFromStatsOrGetS3Files.bind(testHelpers),
+      testForErrorsOrGetFileNames = testHelpers.testForErrorsOrGetFileNames.bind(testHelpers)
 
 // Notes:
 // I had to use a resolve for the error instead of reject
@@ -35,7 +37,7 @@ describe('S3 Webpack Upload', function() {
     })
 
     it('uploads directory recursivly to s3', function() {
-     const createPath = (...fPath) => path.resolve(testHelpers.OUTPUT_PATH, ...fPath)
+      const createPath = (...fPath) => path.resolve(testHelpers.OUTPUT_PATH, ...fPath)
 
       testHelpers.createFolder(createPath('deeply', 'nested', 'folder'))
       testHelpers.createFolder(createPath('deeply', 'nested', 'folder2'))
@@ -66,7 +68,7 @@ describe('S3 Webpack Upload', function() {
         .then(testForFailFromStatsOrGetS3Files)
         .then(assertFileMatches)
         .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
-        .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
     })
 
     it('uploads build to s3 with basePath', function() {
@@ -82,9 +84,9 @@ describe('S3 Webpack Upload', function() {
       return testHelpers.runWebpackConfig({config})
         .then(testForErrorsOrGetFileNames)
         .then(() => testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${randomFile.fileName}`))
-        .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
     })
-})
+  })
 
   describe('basePathTransform', function() {
     it('can transform base path with promise', function() {
@@ -107,7 +109,7 @@ describe('S3 Webpack Upload', function() {
             testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
           ])
         })
-        .then(([localFile, remoteFile]) => (assert.equal(remoteFile, localFile, 'basepath and prefixes added')))
+        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
     })
 
     it('can transform base path without promise', function() {
@@ -198,5 +200,19 @@ describe('S3 Webpack Upload', function() {
 
         return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`)
       })
+  })
+
+  it('allows functions to be used for "s3UploadOptions"', function() {
+    const Bucket = sinon.spy(() => S3Opts.AWS_BUCKET)
+
+    var s3Config = {
+      s3UploadOptions: {Bucket}
+    }
+
+    var config = testHelpers.createWebpackConfig({s3Config})
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForFailFromStatsOrGetS3Files)
+      .then(() => sinon.assert.called(Bucket))
   })
 })

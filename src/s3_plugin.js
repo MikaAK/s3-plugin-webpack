@@ -79,16 +79,22 @@ module.exports = class S3Plugin {
         hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
-    this.options.directory = this.options.directory || compiler.options.output.path || compiler.options.output.context || '.'
+    this.options.directory = this.options.directory          ||
+                             compiler.options.output.path    ||
+                             compiler.options.output.context ||
+                             '.'
 
     compiler.plugin('after-emit', (compilation, cb) => {
-      if (!hasRequiredOptions) {
-        compileError(compilation, `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`)
-        cb()
-      }
+      var error
 
-      if (!hasRequiredUploadOpts) {
-        compileError(compilation, `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`)
+      if (!hasRequiredOptions)
+        error = `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`
+
+      if (!hasRequiredUploadOpts)
+        error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
+
+      if (error) {
+        compileError(compilation, error)
         cb()
       }
 
@@ -129,7 +135,10 @@ module.exports = class S3Plugin {
   }
 
   getFileName(file = '') {
-    return _.includes(file, PATH_SEP) ? file.substring(_.lastIndexOf(file, PATH_SEP) + 1) : file
+    if (_.includes(file, PATH_SEP))
+      return file.substring(_.lastIndexOf(file, PATH_SEP) + 1)
+    else
+      return file
   }
 
   getAssetFiles({assets}) {
@@ -161,13 +170,18 @@ module.exports = class S3Plugin {
     var allHtml,
         {directory, htmlFiles = []} = this.options
 
-    allHtml = htmlFiles.length ? this.addPathToFiles(htmlFiles, directory).concat(files) : files
+    if (htmlFiles.length)
+      allHtml = this.addPathToFiles(htmlFiles, directory).concat(files)
+    else
+      allHtml = files
+
     this.cdnizerOptions.files = allHtml.map(({name}) => `*${name}*`)
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
+    // Add |css to regex - Add when cdnize css is done
     var [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
-      .partition((file) => /\.(html)/.test(file.name)) // |css - Add when cdnize css is done
+      .partition((file) => /\.(html)/.test(file.name))
       .value()
 
     return Promise.all(cdnizeFiles.map(file => this.cdnizeHtml(file)).concat(otherFiles))
@@ -224,9 +238,11 @@ module.exports = class S3Plugin {
   setupProgressBar(uploadFiles) {
     var progressAmount = Array(uploadFiles.length)
     var progressTotal = Array(uploadFiles.length)
-    var countUndefined = (array) => _.reduce(array, (res, value) => res += _.isUndefined(value) ? 1 : 0, 0)
     var calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
     var progressTracker = 0
+    var countUndefined = (array) => _.reduce(array, (res, value) => {
+      return res += _.isUndefined(value) ? 1 : 0
+    }, 0)
 
     var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
@@ -264,8 +280,12 @@ module.exports = class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    var upload,
-        s3Params = _.merge({Key: this.options.basePath + fileName}, DEFAULT_UPLOAD_OPTIONS, this.uploadOptions)
+    var upload
+
+    const Key = this.options.basePath + fileName
+    const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
+      return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
+    })
 
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
@@ -273,7 +293,7 @@ module.exports = class S3Plugin {
 
     upload = this.client.uploadFile({
       localFile: file,
-      s3Params
+      s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     })
 
     if (!this.noCdnizer)

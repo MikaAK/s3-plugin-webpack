@@ -33,10 +33,10 @@ var deleteFolderRecursive = function(path) {
 }
 
 var generateS3Config = function(config) {
-  var params = _.merge(config || {}, {
+  var params = _.merge({}, {
     s3Options: s3Opts.s3Options,
-    s3UploadOptions: s3Opts.s3Params
-  })
+    s3UploadOptions: s3Opts.s3UploadOptions
+  }, config)
 
   return new S3WebpackPlugin(params)
 }
@@ -185,7 +185,9 @@ export default {
 
   assertFileMatches(files) {
     var errors = _(files)
-      .map(({expected, actual, name, s3Url}) => assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`))
+      .map(({expected, actual, name, s3Url}) => {
+        return assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`)
+      })
       .compact()
       .value()
 

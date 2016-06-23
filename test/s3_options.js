@@ -23,7 +23,7 @@ export default {
     region: AWS_REGION
   },
 
-  s3Params: {
+  s3UploadOptions: {
     Bucket: AWS_BUCKET
   },
 

@@ -20,7 +20,9 @@ export const PATH_SEP = path.sep
 export const S3_PATH_SEP = '/'
 export const DEFAULT_TRANSFORM = (item) => Promise.resolve(item)
 
-export const addTrailingS3Sep = fPath =>  fPath ? fPath.replace(/\/?(\?|#|$)/, '/$1') : fPath
+export const addTrailingS3Sep = fPath => {
+  return fPath ? fPath.replace(/\/?(\?|#|$)/, '/$1') : fPath
+}
 
 export const addSeperatorToPath = (fPath) => {
   if (!fPath)
@@ -34,7 +36,10 @@ export const translatePathFromFiles = (rootPath) => {
     return _.map(files, file => {
       return {
         path: file,
-        name: file.replace(rootPath, '').split(PATH_SEP).join(S3_PATH_SEP)
+        name: file
+          .replace(rootPath, '')
+          .split(PATH_SEP)
+          .join(S3_PATH_SEP)
       }
     })
   }
