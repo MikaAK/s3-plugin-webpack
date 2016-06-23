@@ -435,21 +435,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'uploadFile',
 	    value: function uploadFile(fileName, file) {
-	      var upload,
-	          s3Params = _lodash2.default.merge({ Key: this.options.basePath + fileName }, _helpers.DEFAULT_UPLOAD_OPTIONS, this.uploadOptions);
+	      var upload;
+
+	      var s3Params = _lodash2.default.mapValues(this.uploadOptions, function (optionConfig) {
+	        return _lodash2.default.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig;
+	      });
 
 	      // Remove Gzip from encoding if ico
 	      if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip') delete s3Params.ContentEncoding;
 
-	      _lodash2.default.forEach(s3Params, function (value, key) {
-	        if (_lodash2.default.isFunction(value)) {
-	          s3Params[key] = value(fileName, file);
-	        }
-	      });
-
 	      upload = this.client.uploadFile({
 	        localFile: file,
-	        s3Params: s3Params
+	        s3Params: _lodash2.default.merge({ Key: this.options.basePath + fileName }, _helpers.DEFAULT_UPLOAD_OPTIONS, s3Params)
 	      });
 
 	      if (!this.noCdnizer) this.cdnizerOptions.files.push('*' + fileName + '*');

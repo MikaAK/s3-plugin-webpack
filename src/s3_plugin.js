@@ -267,7 +267,7 @@ module.exports = class S3Plugin {
     var upload
 
     const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
-      return _.isFunction(optionConfig) ? optionConfig : optionConfig(fileName, file)
+      return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
     })
 
     // Remove Gzip from encoding if ico
