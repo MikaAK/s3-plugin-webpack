@@ -124,6 +124,34 @@ var config = {
 }
 ```
 
+##### With Dynamic Upload Options
+```javascript
+var config = {
+  plugins: [
+    new S3Plugin({
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket',
+        ContentEncoding(fileName) {
+          if (/\.gz/.test(fileName))
+            return 'gzip'
+        },
+        
+        ContentType(fileName) {
+          if (/\.js/.test(fileName))
+            return 'application/javascript'
+          else
+            return 'text/plain'
+        }
+      }
+    })
+  ]
+}
+```
+
 ### Options
 
 - `exclude`: Regex to match for excluded content
