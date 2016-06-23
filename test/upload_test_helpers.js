@@ -185,7 +185,9 @@ export default {
 
   assertFileMatches(files) {
     var errors = _(files)
-      .map(({expected, actual, name, s3Url}) => assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`))
+      .map(({expected, actual, name, s3Url}) => {
+        return assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`)
+      })
       .compact()
       .value()
 
