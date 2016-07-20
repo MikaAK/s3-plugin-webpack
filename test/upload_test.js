@@ -94,7 +94,10 @@ describe('S3 Webpack Upload', function() {
           BASE_PATH = 'test'
       var s3Config = {
         basePath: BASE_PATH,
-        basePathTransform(basePath) {
+        basePathTransform(basePath, compilation) {
+          assert.isString(basePath);
+          assert.isObject(compilation);
+
           return Promise.resolve(basePath + NAME_PREFIX)
         }
       }
@@ -117,7 +120,10 @@ describe('S3 Webpack Upload', function() {
           BASE_PATH = 'test'
       var s3Config = {
         basePath: BASE_PATH,
-        basePathTransform(basePath) {
+        basePathTransform(basePath, compilation) {
+          assert.isString(basePath);
+          assert.isObject(compilation);
+
           return basePath + NAME_PREFIX
         }
       }
