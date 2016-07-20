@@ -165,6 +165,7 @@ var config = {
 - `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
+- `progress`: Enable progress bar (defaults true)
 
 ###### cdnizerCss
 

@@ -32,6 +32,7 @@ module.exports = class S3Plugin {
     var {
       include,
       exclude,
+      progress,
       basePath,
       directory,
       htmlFiles,
@@ -57,7 +58,8 @@ module.exports = class S3Plugin {
       include,
       exclude,
       basePath,
-      htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
+      htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles,
+      progress: _.isBoolean(progress) ? progress : true
     }
 
     this.clientConfig = {
@@ -273,7 +275,9 @@ module.exports = class S3Plugin {
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
-        this.setupProgressBar(uploadFiles)
+        if (this.options.progress) {
+          this.setupProgressBar(uploadFiles)
+        }
 
         return Promise.all(uploadFiles.map(({promise}) => promise))
       })
