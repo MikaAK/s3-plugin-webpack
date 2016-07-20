@@ -59,7 +59,7 @@ module.exports = class S3Plugin {
       exclude,
       basePath,
       htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles,
-      progress: typeof progress === 'undefined' ? true : progress === true
+      progress: _.isBoolean(progress) ? progress : true
     }
 
     this.clientConfig = {

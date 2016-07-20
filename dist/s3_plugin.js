@@ -116,6 +116,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    var include = options.include;
 	    var exclude = options.exclude;
+	    var progress = options.progress;
 	    var basePath = options.basePath;
 	    var directory = options.directory;
 	    var htmlFiles = options.htmlFiles;
@@ -146,7 +147,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      include: include,
 	      exclude: exclude,
 	      basePath: basePath,
-	      htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles
+	      htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles,
+	      progress: _lodash2.default.isBoolean(progress) ? progress : true
 	    };
 
 	    this.clientConfig = {
@@ -427,7 +429,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return _this7.uploadFile(file.name, file.path);
 	        });
 
-	        _this7.setupProgressBar(uploadFiles);
+	        if (_this7.options.progress) {
+	          _this7.setupProgressBar(uploadFiles);
+	        }
 
 	        return Promise.all(uploadFiles.map(function (_ref4) {
 	          var promise = _ref4.promise;
