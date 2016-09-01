@@ -167,17 +167,6 @@ var config = {
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
 - `progress`: Enable progress bar (defaults true)
 
-###### cdnizerCss
-
-This allows you to cdnize urls inside your css
-provide `cdnizerCss`a config like this
-```
-{
-  test: /images/,
-  cdnUrl: 'http://images.myCompany.com'
-}
-```
-
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
 For tests you will need to either have the environment variables set or setup a .env file. There's a .env.sample so you can `cp .env.sample .env` and fill it in. Make sure to add any new environment variables.
