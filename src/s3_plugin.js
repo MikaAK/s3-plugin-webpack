@@ -40,11 +40,17 @@ module.exports = class S3Plugin {
       s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
-      cloudfrontInvalidateOptions = {}
+      cloudfrontInvalidateOptions = {},
+      indexOptions = {},
+      gzipOptions = {},
+      cacheOptions = {}
     } = options
 
     this.uploadOptions = s3UploadOptions
     this.cloudfrontInvalidateOptions = cloudfrontInvalidateOptions
+    this.indexOptions = indexOptions
+    this.gzipOptions = gzipOptions
+    this.cacheOptions = cacheOptions
     this.isConnected = false
     this.cdnizerOptions = cdnizerOptions
     this.urlMappings = []
@@ -121,6 +127,7 @@ module.exports = class S3Plugin {
       .then((files) => this.filterAllowedFiles(files))
       .then((files) => this.uploadFiles(files))
       .then(() => this.invalidateCloudfront())
+      .then(() => this.setIndex())
   }
 
   handleErrors(error, compilation, cb) {
@@ -295,6 +302,15 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
+    if (this.gzipOptions.test) {
+      if (this.gzipOptions.test.test(fileName))
+        s3Params.ContentEncoding = 'gzip';
+    }
+
+    if (this.cacheOptions.cacheControl) {
+      s3Params.CacheControl = this.cacheOptions.cacheControl;
+    }
+
     upload = this.client.uploadFile({
       localFile: file,
       s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
@@ -337,5 +353,114 @@ module.exports = class S3Plugin {
         return resolve(null)
       }
     })
+  }
+
+  setCloudfrontIndex(clientConfig, indexOptions) {
+    return new Promise(function(resolve, reject) {
+      // Setup Cloudfront
+      var cloudfront = new aws.CloudFront()
+      cloudfront.config.update({
+        accessKeyId: clientConfig.s3Options.accessKeyId,
+        secretAccessKey: clientConfig.s3Options.secretAccessKey,
+      });
+
+      // Get the existing distribution
+      cloudfront.getDistribution({
+        Id: indexOptions.DistributionId
+      }, (err, data) => {
+        if (err) {
+          reject(err)
+        } else {
+          if (data.DistributionConfig.DefaultRootObject === indexOptions.IndexDocument) {
+            resolve()
+          }
+
+          // Update the distribution with the new default root object
+          data.DistributionConfig.DefaultRootObject = indexOptions.IndexDocument;
+
+          cloudfront.updateDistribution({
+            IfMatch: data.ETag,
+            Id: indexOptions.DistributionId,
+            DistributionConfig: data.DistributionConfig
+          }, function(err, data) {
+            if (err) {
+              reject(err)
+            } else {
+              resolve()
+            }
+          });
+        }
+      });
+    });
+  }
+
+  setS3Index(clientConfig, uploadOptions, indexOptions) {
+    return new Promise(function(resolve, reject) {
+      var s3Client = new aws.S3({
+        params: {
+          Bucket: uploadOptions.Bucket,
+        },
+        accessKeyId: clientConfig.s3Options.accessKeyId,
+        secretAccessKey: clientConfig.s3Options.secretAccessKey,
+        region: clientConfig.s3Options.region,
+      })
+      s3Client.getBucketWebsite({}, (err, data) => {
+        if (err) {
+          reject(err)
+        } else {
+          if (data.IndexDocument.Suffix === indexOptions.IndexDocument) {
+            resolve()
+          }
+
+          // Update the distribution with the new default root object
+          data.IndexDocument.Suffix = indexOptions.IndexDocument
+
+          //Remove empty properties
+          Object.keys(data).forEach(function (k) {
+            if (!data[k] || (Array.isArray(data[k]) && !data[k].length)) {
+              delete data[k]
+            }
+          });
+
+          s3Client.putBucketWebsite({
+            WebsiteConfiguration: data
+          }, function (err) {
+            if (err) {
+              reject(err)
+            } else {
+              resolve()
+            }
+          });
+        }
+      });
+    });
+  }
+
+  setIndex() {
+    var {
+      clientConfig,
+      uploadOptions,
+      cloudfrontInvalidateOptions,
+      indexOptions,
+      client,
+    } = this
+
+    var self = this
+
+    if (indexOptions.IndexDocument) {
+      var promises = [];
+      // Cloudfront Index
+      if (indexOptions.cloudfront) {
+        promises.push(self.setCloudfrontIndex(clientConfig, indexOptions))
+      }
+      // S3 Index
+      if (indexOptions.s3) {
+        promises.push(self.setS3Index(clientConfig, uploadOptions, indexOptions))
+      }
+
+      return Promise.all(promises)
+    } else {
+      return Promise.resolve();
+    }
   }
 }

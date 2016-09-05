@@ -30,5 +30,11 @@ export default {
   cloudfrontInvalidateOptions: {
     DistributionId: CLOUDFRONT_DISTRIBUTION_ID,
     Items: ['/*']
-  }
+  },
+
+  indexOptions: {
+    IndexDocument: 'index.123.html',
+    s3: true,
+    cloudfront: true,
+  },
 }

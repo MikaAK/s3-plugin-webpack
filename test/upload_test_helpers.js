@@ -196,5 +196,9 @@ export default {
 
   getCloudfrontInvalidateOptions() {
     return s3Opts.cloudfrontInvalidateOptions
+  },
+
+  getIndexOptions() {
+    return s3Opts.indexOptions
   }
 }
