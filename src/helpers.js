@@ -52,18 +52,18 @@ export const getDirectoryFilesRecursive = (dir, ignores = []) => {
     .then(translatePathFromFiles(dir))
 }
 
-export const testRule = (rule, subject, passes = false) => {
+export const testRule = (rule, subject) => {
   if (_.isRegExp(rule)) {
-    passes = rule.test(subject)
+    return rule.test(subject)
   } else if (_.isFunction(rule)) {
-    passes = !!rule(subject)
+    return !!rule(subject)
   } else if (_.isArray(rule)) {
-    passes = _.every(rule, (condition) => testRule(condition, subject))
+    return _.every(rule, (condition) => testRule(condition, subject))
   } else if (_.isString(rule)) {
-    passes = (
+    return (
       new RegExp('^' + rule.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')) // eslint-disable-line
     ).test(subject)
+  } else {
+    throw new Error('Invalid include / exclude rule')
   }
-
-  return passes
 }
