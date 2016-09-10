@@ -51,3 +51,19 @@ export const getDirectoryFilesRecursive = (dir, ignores = []) => {
   })
     .then(translatePathFromFiles(dir))
 }
+
+export const testRule = (rule, subject, passes = false) => {
+  if (_.isRegExp(rule)) {
+    passes = rule.test(subject)
+  } else if (_.isFunction(rule)) {
+    passes = !!rule(subject)
+  } else if (_.isArray(rule)) {
+    passes = _.every(rule, (condition) => testRule(condition, subject))
+  } else if (_.isString(rule)) {
+    passes = (
+      new RegExp('^' + rule.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')) // eslint-disable-line
+    ).test(subject)
+  }
+
+  return passes
+}

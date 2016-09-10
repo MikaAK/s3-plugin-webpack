@@ -12,6 +12,7 @@ import {
   addSeperatorToPath,
   addTrailingS3Sep,
   getDirectoryFilesRecursive,
+  testRule,
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
   DEFAULT_S3_OPTIONS,
@@ -217,8 +218,8 @@ module.exports = class S3Plugin {
         isInclude,
         {include, exclude} = this.options
 
-    isInclude = include ? include.test(file) : true
-    isExclude = exclude ? exclude.test(file) : false
+    isInclude = include ? testRule(include, file) : true
+    isExclude = exclude ? testRule(exclude, file) : false
 
     return isInclude && !isExclude
   }
