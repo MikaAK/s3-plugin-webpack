@@ -60,9 +60,7 @@ export const testRule = (rule, subject) => {
   } else if (_.isArray(rule)) {
     return _.every(rule, (condition) => testRule(condition, subject))
   } else if (_.isString(rule)) {
-    return (
-      new RegExp('^' + rule.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&')) // eslint-disable-line
-    ).test(subject)
+    return new RegExp(rule).test(subject)
   } else {
     throw new Error('Invalid include / exclude rule')
   }
