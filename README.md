@@ -15,7 +15,7 @@ $ npm i webpack-s3-plugin
 Note: This plugin needs NodeJS > 0.12.0
 
 ### Usage Instructions
-> I notice a lot of people are setting the directory option when the files are part of their build. Please don't set   directory if your uploading your build. Using the directory option reads the files after compilation to upload instead of from the build process. 
+> I notice a lot of people are setting the directory option when the files are part of their build. Please don't set   directory if your uploading your build. Using the directory option reads the files after compilation to upload instead of from the build process.
 
 > You can also use a [credentials file](https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) from AWS.
 
@@ -68,6 +68,43 @@ var config = {
 }
 ```
 
+##### Advanced `include` and `exclude rules`
+
+`include` and `exclude` rules behave similarly to Webpack's loader options.  In addition to a RegExp you can pass a function which will be called with the path as its first argument.  Returning a truthy value will match the rule.  You can also pass an Array of rules, all of which must pass for the file to be included or excluded.
+
+```javascript
+import isGitIgnored from 'is-gitignored'
+
+// Up to you how to handle this
+var isPathOkToUpload = function(path) {
+  return require('my-projects-publishing-rules').checkFile(path)
+}
+
+var config = {
+  plugins: [
+    new S3Plugin({
+      // Only upload css and js and only the paths that our rules database allows
+      include: [
+        /.*\.(css|js)/,
+        function(path) { isPathOkToUpload(path) }
+      ],
+
+      // function to check if the path is gitignored
+      exclude: isGitIgnored,
+
+      // s3Options are required
+      s3Options: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      },
+      s3UploadOptions: {
+        Bucket: 'MyBucket'
+      }
+    })
+  ]
+}
+```
+
 ##### With basePathTransform
 ```javascript
 import gitsha from 'gitsha'
@@ -80,7 +117,7 @@ var addSha = function() {
       else
        // resolve to first 5 characters of sha
        resolve(output.slice(0, 5))
-    }) 
+    })
   })
 }
 
@@ -139,7 +176,7 @@ var config = {
           if (/\.gz/.test(fileName))
             return 'gzip'
         },
-        
+
         ContentType(fileName) {
           if (/\.js/.test(fileName))
             return 'application/javascript'
@@ -154,8 +191,8 @@ var config = {
 
 ### Options
 
-- `exclude`: Regex to match for excluded content
-- `include`: Regex to match for included content
+- `exclude`: A Pattern to match for excluded content. Behaves similarly to webpack's loader configuration.
+- `include`: A Pattern to match for included content. Behaves the same as the `exclude`.
 - `s3Options`: Provide keys for upload extention of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
 - `s3UploadOptions`: Provide upload options [putObject](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property )
 - `basePath`: Provide the namespace where upload files on S3
