@@ -284,8 +284,6 @@ module.exports = class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    var upload
-
     const Key = this.options.basePath + fileName
     const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
       return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
@@ -295,7 +293,7 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    upload = this.client.uploadFile({
+    const upload = this.client.uploadFile({
       localFile: file,
       s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     })
@@ -303,7 +301,7 @@ module.exports = class S3Plugin {
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    var promise = new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
       upload.on('end', () => resolve(file))
     })
@@ -312,16 +310,15 @@ module.exports = class S3Plugin {
   }
 
   invalidateCloudfront() {
-    var {clientConfig, cloudfrontInvalidateOptions} = this
+    const {clientConfig, cloudfrontInvalidateOptions} = this
 
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
-        var cloudfront = new aws.CloudFront()
+        const {accessKeyId, secretAccessKey} = clientConfig.s3Options
+        const cloudfront = new aws.CloudFront()
 
-        cloudfront.config.update({
-          accessKeyId: clientConfig.s3Options.accessKeyId,
-          secretAccessKey: clientConfig.s3Options.secretAccessKey,
-        })
+        if (accessKeyId && secretAccessKey)
+          cloudfront.config.update({accessKeyId, secretAccessKey})
 
         cloudfront.createInvalidation({
           DistributionId: cloudfrontInvalidateOptions.DistributionId,
