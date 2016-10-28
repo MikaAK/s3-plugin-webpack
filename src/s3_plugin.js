@@ -23,7 +23,7 @@ import {
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
-var compileError = function(compilation, error) {
+const compileError = function(compilation, error) {
   compilation.errors.push(new Error(error))
 }
 
@@ -76,9 +76,9 @@ module.exports = class S3Plugin {
   apply(compiler) {
     this.connect()
 
-    var isDirectoryUpload = !!this.options.directory,
-        hasRequiredOptions = this.client.s3.config.credentials !== null,
-        hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
+    const isDirectoryUpload = !!this.options.directory,
+          hasRequiredOptions = this.client.s3.config.credentials !== null,
+          hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
     this.options.directory = this.options.directory          ||
@@ -101,7 +101,7 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        let dPath = addSeperatorToPath(this.options.directory)
+        const dPath = addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
           .then((files) => this.handleFiles(files, cb))
@@ -144,7 +144,7 @@ module.exports = class S3Plugin {
   }
 
   getAssetFiles({assets}) {
-    var files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
+    const files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
 
     return Promise.resolve(files)
   }
@@ -169,8 +169,9 @@ module.exports = class S3Plugin {
     if (this.noCdnizer)
       return Promise.resolve(files)
 
-    var allHtml,
-        {directory, htmlFiles = []} = this.options
+    var allHtml
+
+    const {directory, htmlFiles = []} = this.options
 
     if (htmlFiles.length)
       allHtml = this.addPathToFiles(htmlFiles, directory).concat(files)
@@ -181,7 +182,7 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     // Add |css to regex - Add when cdnize css is done
-    var [cdnizeFiles, otherFiles] = _(allHtml)
+    const [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
       .partition((file) => /\.(html)/.test(file.name))
       .value()
@@ -213,12 +214,9 @@ module.exports = class S3Plugin {
   }
 
   isIncludeAndNotExclude(file) {
-    var isExclude,
-        isInclude,
-        {include, exclude} = this.options
-
-    isInclude = include ? include.test(file) : true
-    isExclude = exclude ? exclude.test(file) : false
+    const {include, exclude} = this.options,
+          isInclude = include ? include.test(file) : true,
+          isExclude = exclude ? exclude.test(file) : false
 
     return isInclude && !isExclude
   }
@@ -240,13 +238,13 @@ module.exports = class S3Plugin {
   setupProgressBar(uploadFiles) {
     var progressAmount = Array(uploadFiles.length)
     var progressTotal = Array(uploadFiles.length)
-    var calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
     var progressTracker = 0
-    var countUndefined = (array) => _.reduce(array, (res, value) => {
+    const calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
+    const countUndefined = (array) => _.reduce(array, (res, value) => {
       return res += _.isUndefined(value) ? 1 : 0
     }, 0)
 
-    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+    const progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
       incomplete: '∆',
       total: 100
