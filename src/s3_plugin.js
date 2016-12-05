@@ -15,7 +15,6 @@ import {
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
   DEFAULT_S3_OPTIONS,
-  REQUIRED_S3_OPTS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
   DEFAULT_TRANSFORM,
@@ -77,7 +76,6 @@ module.exports = class S3Plugin {
     this.connect()
 
     const isDirectoryUpload = !!this.options.directory,
-          hasRequiredOptions = this.client.s3.config.credentials !== null,
           hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
@@ -88,9 +86,6 @@ module.exports = class S3Plugin {
 
     compiler.plugin('after-emit', (compilation, cb) => {
       var error
-
-      if (!hasRequiredOptions)
-        error = `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`
 
       if (!hasRequiredUploadOpts)
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`

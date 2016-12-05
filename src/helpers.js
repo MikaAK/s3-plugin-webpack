@@ -14,7 +14,6 @@ export const DEFAULT_S3_OPTIONS = {
   region: 'us-west-2'
 }
 
-export const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey']
 export const REQUIRED_S3_UP_OPTS = ['Bucket']
 export const PATH_SEP = path.sep
 export const S3_PATH_SEP = '/'
