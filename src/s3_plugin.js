@@ -16,7 +16,6 @@ import {
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
   DEFAULT_S3_OPTIONS,
-  REQUIRED_S3_OPTS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
   DEFAULT_TRANSFORM,
@@ -24,7 +23,7 @@ import {
 
 http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50
 
-var compileError = function(compilation, error) {
+const compileError = function(compilation, error) {
   compilation.errors.push(new Error(error))
 }
 
@@ -77,9 +76,8 @@ module.exports = class S3Plugin {
   apply(compiler) {
     this.connect()
 
-    var isDirectoryUpload = !!this.options.directory,
-        hasRequiredOptions = this.client.s3.config.credentials !== null,
-        hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
+    const isDirectoryUpload = !!this.options.directory,
+          hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
     this.options.directory = this.options.directory          ||
@@ -90,9 +88,6 @@ module.exports = class S3Plugin {
     compiler.plugin('after-emit', (compilation, cb) => {
       var error
 
-      if (!hasRequiredOptions)
-        error = `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`
-
       if (!hasRequiredUploadOpts)
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
 
@@ -102,7 +97,7 @@ module.exports = class S3Plugin {
       }
 
       if (isDirectoryUpload) {
-        let dPath = addSeperatorToPath(this.options.directory)
+        const dPath = addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
           .then((files) => this.handleFiles(files, cb))
@@ -145,7 +140,7 @@ module.exports = class S3Plugin {
   }
 
   getAssetFiles({assets}) {
-    var files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
+    const files = _.map(assets, (value, name) => ({name, path: value.existsAt}))
 
     return Promise.resolve(files)
   }
@@ -170,8 +165,9 @@ module.exports = class S3Plugin {
     if (this.noCdnizer)
       return Promise.resolve(files)
 
-    var allHtml,
-        {directory, htmlFiles = []} = this.options
+    var allHtml
+
+    const {directory, htmlFiles = []} = this.options
 
     if (htmlFiles.length)
       allHtml = this.addPathToFiles(htmlFiles, directory).concat(files)
@@ -182,7 +178,7 @@ module.exports = class S3Plugin {
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
     // Add |css to regex - Add when cdnize css is done
-    var [cdnizeFiles, otherFiles] = _(allHtml)
+    const [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
       .partition((file) => /\.(html)/.test(file.name))
       .value()
@@ -241,13 +237,13 @@ module.exports = class S3Plugin {
   setupProgressBar(uploadFiles) {
     var progressAmount = Array(uploadFiles.length)
     var progressTotal = Array(uploadFiles.length)
-    var calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
     var progressTracker = 0
-    var countUndefined = (array) => _.reduce(array, (res, value) => {
+    const calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
+    const countUndefined = (array) => _.reduce(array, (res, value) => {
       return res += _.isUndefined(value) ? 1 : 0
     }, 0)
 
-    var progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
+    const progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
       incomplete: '∆',
       total: 100
@@ -285,8 +281,6 @@ module.exports = class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    var upload
-
     const Key = this.options.basePath + fileName
     const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
       return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
@@ -296,7 +290,7 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    upload = this.client.uploadFile({
+    const upload = this.client.uploadFile({
       localFile: file,
       s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     })
@@ -304,7 +298,7 @@ module.exports = class S3Plugin {
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    var promise = new Promise((resolve, reject) => {
+    const promise = new Promise((resolve, reject) => {
       upload.on('error', reject)
       upload.on('end', () => resolve(file))
     })
@@ -313,16 +307,15 @@ module.exports = class S3Plugin {
   }
 
   invalidateCloudfront() {
-    var {clientConfig, cloudfrontInvalidateOptions} = this
+    const {clientConfig, cloudfrontInvalidateOptions} = this
 
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
-        var cloudfront = new aws.CloudFront()
+        const {accessKeyId, secretAccessKey} = clientConfig.s3Options
+        const cloudfront = new aws.CloudFront()
 
-        cloudfront.config.update({
-          accessKeyId: clientConfig.s3Options.accessKeyId,
-          secretAccessKey: clientConfig.s3Options.secretAccessKey,
-        })
+        if (accessKeyId && secretAccessKey)
+          cloudfront.config.update({accessKeyId, secretAccessKey})
 
         cloudfront.createInvalidation({
           DistributionId: cloudfrontInvalidateOptions.DistributionId,
