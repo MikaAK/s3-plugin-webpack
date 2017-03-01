@@ -50,3 +50,17 @@ export const getDirectoryFilesRecursive = (dir, ignores = []) => {
   })
     .then(translatePathFromFiles(dir))
 }
+
+export const testRule = (rule, subject) => {
+  if (_.isRegExp(rule)) {
+    return rule.test(subject)
+  } else if (_.isFunction(rule)) {
+    return !!rule(subject)
+  } else if (_.isArray(rule)) {
+    return _.every(rule, (condition) => testRule(condition, subject))
+  } else if (_.isString(rule)) {
+    return new RegExp(rule).test(subject)
+  } else {
+    throw new Error('Invalid include / exclude rule')
+  }
+}
