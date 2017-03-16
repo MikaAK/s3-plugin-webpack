@@ -177,24 +177,13 @@ module.exports = class S3Plugin {
     this.cdnizerOptions.files = allHtml.map(({name}) => `*${name}*`)
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
-    // Add |css to regex - Add when cdnize css is done
     const [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
-      .partition((file) => /\.(html)/.test(file.name))
+      .partition((file) => /\.(html|css)/.test(file.name))
       .value()
 
     return Promise.all(cdnizeFiles.map(file => this.cdnizeHtml(file)).concat(otherFiles))
   }
-
-  // For future implimentation
-  // changeCssUrls(files = []) {
-  //   if (this.noCdnizer)
-  //     return Promise.resolve(files)
-
-  //   data.replace(/url\(\/images/g, `url(${imagePath}`)
-
-  //   return this.cdnizeCss(cssFile2, imagePath, files)
-  // }
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
