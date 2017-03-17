@@ -10,7 +10,7 @@ import {assert} from 'chai'
 import {spawnSync} from 'child_process'
 import ExtractTextPlugin from 'extract-text-webpack-plugin'
 
-const S3_URL = `https://s3-${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
+const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
       S3_ERROR_REGEX = /<Error>/,
       OUTPUT_FILE_NAME = 's3Test',
       OUTPUT_PATH = path.resolve(__dirname, '.tmp'),

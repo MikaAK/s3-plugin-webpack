@@ -15,7 +15,6 @@ import {
   testRule,
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
-  DEFAULT_S3_OPTIONS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
   DEFAULT_TRANSFORM,
@@ -64,7 +63,7 @@ module.exports = class S3Plugin {
 
     this.clientConfig = {
       maxAsyncS3: 50,
-      s3Options: _.merge({}, DEFAULT_S3_OPTIONS, s3Options)
+      s3Options: s3Options
     }
 
     this.noCdnizer = !Object.keys(this.cdnizerOptions).length

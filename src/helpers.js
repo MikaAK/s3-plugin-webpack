@@ -10,9 +10,6 @@ export const DEFAULT_UPLOAD_OPTIONS = {
   ACL: 'public-read'
 }
 
-export const DEFAULT_S3_OPTIONS = {
-  region: 'us-west-2'
-}
 
 export const REQUIRED_S3_UP_OPTS = ['Bucket']
 export const PATH_SEP = path.sep
