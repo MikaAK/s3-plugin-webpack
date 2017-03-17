@@ -8,6 +8,7 @@ import s3Opts from './s3_options'
 import S3WebpackPlugin from '../src/s3_plugin'
 import {assert} from 'chai'
 import {spawnSync} from 'child_process'
+import ExtractTextPlugin from 'extract-text-webpack-plugin'
 
 const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
       S3_ERROR_REGEX = /<Error>/,
@@ -108,8 +109,18 @@ export default {
   createWebpackConfig({config, s3Config} = {}) {
     return _.extend({
       entry: ENTRY_PATH,
+      module: {
+        loaders: [{
+          test: /\.png/,
+          loader: 'file?name=[name]-[hash].[ext]'
+        }, {
+          test: /\.css$/,
+          loader: ExtractTextPlugin.extract('css')
+        }]
+      },
       plugins: [
         new HtmlWebpackPlugin(),
+        new ExtractTextPlugin('styles.css'),
         generateS3Config(s3Config)
       ],
       output: {

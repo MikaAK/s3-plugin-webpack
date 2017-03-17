@@ -202,6 +202,26 @@ describe('S3 Webpack Upload', function() {
       })
   })
 
+  it('cdnizes links inside of CSS files', function() {
+    var s3Config = {
+      cdnizerOptions: {
+        defaultCDNBase: testHelpers.S3_URL
+      }
+    }
+
+    var config = testHelpers.createWebpackConfig({s3Config})
+
+    return testHelpers.runWebpackConfig({config})
+      .then(testForErrorsOrGetFileNames)
+      .then(fileNames => Promise.resolve(fileNames.filter(name => /.*\.css$/.test(name))))
+      .then(function([file]) {
+        var outputFile = testHelpers.readFileFromOutputDir(file),
+            s3UrlRegex = new RegExp(testHelpers.S3_URL, 'gi')
+
+        return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`)
+      })
+  })
+
   it('allows functions to be used for "s3UploadOptions"', function() {
     const Bucket = sinon.spy(() => S3Opts.AWS_BUCKET)
 

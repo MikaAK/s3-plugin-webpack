@@ -12,9 +12,9 @@ import {
   addSeperatorToPath,
   addTrailingS3Sep,
   getDirectoryFilesRecursive,
+  testRule,
   UPLOAD_IGNORES,
   DEFAULT_UPLOAD_OPTIONS,
-  REQUIRED_S3_OPTS,
   REQUIRED_S3_UP_OPTS,
   PATH_SEP,
   DEFAULT_TRANSFORM,
@@ -76,7 +76,6 @@ module.exports = class S3Plugin {
     this.connect()
 
     const isDirectoryUpload = !!this.options.directory,
-          hasRequiredOptions = this.client.s3.config.credentials !== null,
           hasRequiredUploadOpts = _.every(REQUIRED_S3_UP_OPTS, type => this.uploadOptions[type])
 
     // Set directory to output dir or custom
@@ -87,9 +86,6 @@ module.exports = class S3Plugin {
 
     compiler.plugin('after-emit', (compilation, cb) => {
       var error
-
-      if (!hasRequiredOptions)
-        error = `S3Plugin: Must provide ${REQUIRED_S3_OPTS.join(', ')}`
 
       if (!hasRequiredUploadOpts)
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
@@ -180,24 +176,13 @@ module.exports = class S3Plugin {
     this.cdnizerOptions.files = allHtml.map(({name}) => `*${name}*`)
     this.cdnizer = cdnizer(this.cdnizerOptions)
 
-    // Add |css to regex - Add when cdnize css is done
     const [cdnizeFiles, otherFiles] = _(allHtml)
       .uniq('name')
-      .partition((file) => /\.(html)/.test(file.name))
+      .partition((file) => /\.(html|css)/.test(file.name))
       .value()
 
     return Promise.all(cdnizeFiles.map(file => this.cdnizeHtml(file)).concat(otherFiles))
   }
-
-  // For future implimentation
-  // changeCssUrls(files = []) {
-  //   if (this.noCdnizer)
-  //     return Promise.resolve(files)
-
-  //   data.replace(/url\(\/images/g, `url(${imagePath}`)
-
-  //   return this.cdnizeCss(cssFile2, imagePath, files)
-  // }
 
   filterAllowedFiles(files) {
     return files.reduce((res, file) => {
@@ -213,9 +198,12 @@ module.exports = class S3Plugin {
   }
 
   isIncludeAndNotExclude(file) {
-    const {include, exclude} = this.options,
-          isInclude = include ? include.test(file) : true,
-          isExclude = exclude ? exclude.test(file) : false
+    var isExclude,
+        isInclude,
+        {include, exclude} = this.options
+
+    isInclude = include ? testRule(include, file) : true
+    isExclude = exclude ? testRule(exclude, file) : false
 
     return isInclude && !isExclude
   }

@@ -10,7 +10,7 @@ export const DEFAULT_UPLOAD_OPTIONS = {
   ACL: 'public-read'
 }
 
-export const REQUIRED_S3_OPTS = ['accessKeyId', 'secretAccessKey']
+
 export const REQUIRED_S3_UP_OPTS = ['Bucket']
 export const PATH_SEP = path.sep
 export const S3_PATH_SEP = '/'
@@ -46,4 +46,18 @@ export const getDirectoryFilesRecursive = (dir, ignores = []) => {
     readDir(dir, ignores, (err, files) => err ? reject(err) : resolve(files))
   })
     .then(translatePathFromFiles(dir))
+}
+
+export const testRule = (rule, subject) => {
+  if (_.isRegExp(rule)) {
+    return rule.test(subject)
+  } else if (_.isFunction(rule)) {
+    return !!rule(subject)
+  } else if (_.isArray(rule)) {
+    return _.every(rule, (condition) => testRule(condition, subject))
+  } else if (_.isString(rule)) {
+    return new RegExp(rule).test(subject)
+  } else {
+    throw new Error('Invalid include / exclude rule')
+  }
 }
