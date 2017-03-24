@@ -276,7 +276,7 @@ module.exports = class S3Plugin {
 
     // avoid noname folders in bucket
     if (Key[0] === '/') {
-      Key = Key.substr(1);
+      Key = Key.substr(1)
     }
 
     // Remove Gzip from encoding if ico
