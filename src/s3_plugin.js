@@ -274,6 +274,11 @@ module.exports = class S3Plugin {
       return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
     })
 
+    // avoid noname folders in bucket
+    if (Key[0] === '/') {
+      Key = Key.substr(1);
+    }
+
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
