@@ -269,10 +269,15 @@ module.exports = class S3Plugin {
   }
 
   uploadFile(fileName, file) {
-    const Key = this.options.basePath + fileName
+    let Key = this.options.basePath + fileName
     const s3Params = _.mapValues(this.uploadOptions, (optionConfig) => {
       return _.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig
     })
+
+    // avoid noname folders in bucket
+    if (Key[0] === '/') {
+      Key = Key.substr(1)
+    }
 
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
