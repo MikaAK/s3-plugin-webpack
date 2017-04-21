@@ -99,22 +99,22 @@ module.exports = class S3Plugin {
         const dPath = addSeperatorToPath(this.options.directory)
 
         this.getAllFilesRecursive(dPath)
-          .then((files) => this.handleFiles(files, cb))
+          .then((files) => this.handleFiles(files, compilation))
           .then(() => cb())
           .catch(e => this.handleErrors(e, compilation, cb))
       } else {
         this.getAssetFiles(compilation)
-          .then((files) => this.handleFiles(files))
+          .then((files) => this.handleFiles(files, compilation))
           .then(() => cb())
           .catch(e => this.handleErrors(e, compilation, cb))
       }
     })
   }
 
-  handleFiles(files) {
+  handleFiles(files, compilation) {
     return this.changeUrls(files)
       .then((files) => this.filterAllowedFiles(files))
-      .then((files) => this.uploadFiles(files))
+      .then((files) => this.uploadFiles(files, compilation))
       .then(() => this.invalidateCloudfront())
   }
 
@@ -216,8 +216,8 @@ module.exports = class S3Plugin {
     this.isConnected = true
   }
 
-  transformBasePath() {
-    return Promise.resolve(this.basePathTransform(this.options.basePath))
+  transformBasePath(compilation) {
+    return Promise.resolve(this.basePathTransform(this.options.basePath, compilation))
       .then(addTrailingS3Sep)
       .then(nPath => this.options.basePath = nPath)
   }
@@ -255,8 +255,8 @@ module.exports = class S3Plugin {
     })
   }
 
-  uploadFiles(files = []) {
-    return this.transformBasePath()
+  uploadFiles(files = [], compilation) {
+    return this.transformBasePath(compilation)
       .then(() => {
         var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
