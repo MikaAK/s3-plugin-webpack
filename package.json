@@ -31,7 +31,7 @@
   },
   "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
-    "aws-sdk": "~2.4.1",
+    "aws-sdk": "^2.4.1",
     "cdnizer": "^1.1.5",
     "lodash": "^4.13.0",
     "progress": "^1.1.8",
