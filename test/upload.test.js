@@ -2,8 +2,7 @@ import _ from 'lodash';
 import path from 'path';
 import S3Opts from './s3_options';
 import testHelpers from './upload_test_helpers';
-import { assert } from 'chai';
-import * as sinon from 'sinon';
+import jest from 'jest';
 
 const CONTEXT = __dirname;
 
@@ -66,7 +65,7 @@ describe('S3 Webpack Upload', () => {
         .then(testForFailFromStatsOrGetS3Files)
         .then(assertFileMatches)
         .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
-        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'));
+        .then(fileBody => expect(fileBody).toMatch(testHelpers.S3_ERROR_REGEX));
     });
 
     it('uploads build to s3 with basePath', () => {
@@ -82,7 +81,7 @@ describe('S3 Webpack Upload', () => {
       return testHelpers.runWebpackConfig({ config })
         .then(testForErrorsOrGetFileNames)
         .then(() => testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${randomFile.fileName}`))
-        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'));
+        .then(fileBody => expect(fileBody).toMatch(testHelpers.S3_ERROR_REGEX));
     });
   });
 
@@ -105,7 +104,7 @@ describe('S3 Webpack Upload', () => {
           testHelpers.readFileFromOutputDir(fileName),
           testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`),
         ]))
-        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'));
+        .then(([localFile, remoteFile]) => expect(remoteFile).toEqual(localFile));
     });
 
     it('can transform base path without promise', () => {
@@ -126,7 +125,7 @@ describe('S3 Webpack Upload', () => {
           testHelpers.readFileFromOutputDir(fileName),
           testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`),
         ]))
-        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'));
+        .then(([localFile, remoteFile]) => expect(remoteFile).toEqual(localFile));
     });
   });
 
@@ -147,7 +146,7 @@ describe('S3 Webpack Upload', () => {
       .then(testForFailFromStatsOrGetS3Files)
       .then(assertFileMatches)
       .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
-      .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'));
+      .then(randomFileBody => expect(randomFileBody).toMatch(testHelpers.S3_ERROR_REGEX));
   });
 
   it('excludes files from `exclude` property', () => {
@@ -171,7 +170,7 @@ describe('S3 Webpack Upload', () => {
       .then((files) => {
         const fFiles = files.filter(excludeFilter);
 
-        for (const { name, actual } of fFiles) { assert.match(actual, testHelpers.S3_ERROR_REGEX, `Excluded File ${name} Exists in S3`); }
+        for (const { name, actual } of fFiles) { expect(actual).toMatch(testHelpers.S3_ERROR_REGEX); }
       });
   });
 
@@ -191,7 +190,7 @@ describe('S3 Webpack Upload', () => {
         let outputFile = testHelpers.readFileFromOutputDir(htmlFile),
           s3UrlRegex = new RegExp(testHelpers.S3_URL, 'gi');
 
-        return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`);
+        return expect(outputFile).toMatch(s3UrlRegex);
       });
   });
 
@@ -211,21 +210,7 @@ describe('S3 Webpack Upload', () => {
         let outputFile = testHelpers.readFileFromOutputDir(file),
           s3UrlRegex = new RegExp(testHelpers.S3_URL, 'gi');
 
-        return assert.match(outputFile, s3UrlRegex, `Url not changed to ${testHelpers.S3_URL}`);
+        return expect(outputFile).toMatch(s3UrlRegex);
       });
-  });
-
-  it('allows functions to be used for "s3UploadOptions"', () => {
-    const Bucket = sinon.spy(() => S3Opts.AWS_BUCKET);
-
-    const s3Config = {
-      s3UploadOptions: { Bucket },
-    };
-
-    const config = testHelpers.createWebpackConfig({ s3Config });
-
-    return testHelpers.runWebpackConfig({ config })
-      .then(testForFailFromStatsOrGetS3Files)
-      .then(() => sinon.assert.called(Bucket));
   });
 });

@@ -6,7 +6,6 @@ import fs from 'fs';
 import HtmlWebpackPlugin from 'html-webpack-plugin';
 import s3Opts from './s3_options';
 import S3WebpackPlugin from '../src/index.js';
-import { assert } from 'chai';
 import { spawnSync } from 'child_process';
 import ExtractTextPlugin from 'extract-text-webpack-plugin';
 
@@ -69,7 +68,7 @@ export default {
   },
 
   testForFailFromStatsOrGetS3Files({ errors, stats }) {
-    if (errors) { return assert.fail([], errors, createBuildFailError(errors)); }
+    if (errors) { return expect(createBuildFailError(errors)).toBe(false); }
 
     return this.getBuildFilesFromS3(this.getFilesFromStats(stats));
   },
@@ -78,7 +77,7 @@ export default {
     return ({ errors }) => {
       const basePath = this.addSlashToPath(`${directory}`);
 
-      if (errors) { return assert.fail([], errors, createBuildFailError(errors)); }
+      if (errors) { return expect(createBuildFailError(errors)).toBe(false); }
       return this.getBuildFilesFromS3(this.getFilesFromDirectory(directory, basePath));
     };
   },
@@ -108,10 +107,10 @@ export default {
       module: {
         loaders: [{
           test: /\.png/,
-          loader: 'file?name=[name]-[hash].[ext]',
+          loader: 'file-loader?name=[name]-[hash].[ext]',
         }, {
           test: /\.css$/,
-          loader: ExtractTextPlugin.extract('css'),
+          loader: ExtractTextPlugin.extract('css-loader'),
         }],
       },
       plugins: [
@@ -178,14 +177,14 @@ export default {
   },
 
   testForErrorsOrGetFileNames({ stats, errors }) {
-    if (errors) { return assert.fail([], errors, createBuildFailError(errors)); }
+    if (errors) { return expect(createBuildFailError(errors)).toBe(false); }
 
     return this.getFilesFromStats(stats);
   },
 
   assertFileMatches(files) {
     const errors = _(files)
-      .map(({ expected, actual, name, s3Url }) => assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`))
+      .map(({ expected, actual, name, s3Url }) => expect(actual).toEqual(expected))
       .compact()
       .value();
 
