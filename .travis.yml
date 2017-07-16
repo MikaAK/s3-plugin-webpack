@@ -1,14 +1,48 @@
+sudo: false
+dist: trusty
 language: node_js
-node_js:
-- 5
-cache:
-  directories:
-  - node_modules
-deploy:
-  provider: npm
-  email: me@mikakalathil.ca
-  api_key:
-    secure: M+SrtYGQo5DsnepJqEwuy5e7K6Ct/dxwc26AM/1DDjUP3DKCTi4YyWqAEhivIr9p++raeEn6AqJKVbY81gfotDdSEHtiFRVN3NmWcPf9dUD1oyOtIJ9bKI+GdeRx+O11265JlJ2V0d+WZMgZVazWOJ2tjhb3hqxyoH559hYqsWKQejRDlNhu1mFROCFDUFCJESS39v0V0peCbtYlpjLAF8x25rbrq0I9Er5OLIOR2E4QhW8SgO64yHDEXJfdUXYV69Ycew4mdA2FRmLBYq+Q5UMjeHxYUwJ/hBQw6j/1szRiH9/J0OqBUmMautSwYGSSEzeiI8/R0EXq9lCHDB01Q4sJTt2oXYBgIABB4Tg8M8fZnMpboZUsujLRnUo1bmAqVHXJTOQSzJSDI3qMvzcpxP0JG5f+ldwiDgvn38uLfBgH6c0mbmFZUUuSGOQQpF/WnSc3KABg3/1U/e4SPX8V7Znx4W4O/c3gXuYvRbwzI6V1AVHBfb8GlNaGitutNMwBPqBnl8KU0VEOH7MCdwWjEAozz2SJHEBG3RkxEqkxPj2R+XXoTRiZdLE3JZUHoYKgaBa8Tv1BcA1logn12eX2DcouZGh+0P88Ka+jsJaCtdgHrdMH3rIl2JtfOw1zaV0qHTuLKJ4U1u1fzqSfdG5ZMuk0QtwTTD6ZjWEtw+EqOMs=
-  on:
-    tags: true
-    repo: MikaAK/s3-plugin-webpack
+branches:
+  only:
+    - master
+jobs:
+  fast_finish: true
+  allow_failures:
+    - env: WEBPACK_VERSION=canary
+  include:
+    - &test-latest
+      stage: Webpack latest
+      node_js: 6
+      env: WEBPACK_VERSION=latest JOB_PART=test
+      script: npm run travis:$JOB_PART
+    - <<: *test-latest
+      node_js: 4.3
+      env: WEBPACK_VERSION=latest JOB_PART=test
+      script: npm run travis:$JOB_PART
+    - <<: *test-latest
+      node_js: 8
+      env: WEBPACK_VERSION=latest JOB_PART=lint
+      script: npm run travis:$JOB_PART
+    - <<: *test-latest
+      node_js: 8
+      env: WEBPACK_VERSION=latest JOB_PART=coverage
+      script: npm run travis:$JOB_PART
+      after_success: 'bash <(curl -s https://codecov.io/bash)'
+    - stage: Webpack canary
+      before_script: npm i --no-save git://github.com/webpack/webpack.git#master
+      script: npm run travis:$JOB_PART
+      node_js: 8
+      env: WEBPACK_VERSION=canary JOB_PART=test
+before_install:
+  - 'if [[ `npm -v` != 5* ]]; then npm i -g npm@latest; fi'
+  - nvm --version
+  - node --version
+  - npm --version
+before_script:
+  - |-
+    if [ "$WEBPACK_VERSION" ]; then
+      npm i --no-save webpack@$WEBPACK_VERSION
+    fi
+script:
+  - 'npm run travis:$JOB_PART'
+after_success:
+  - 'bash <(curl -s https://codecov.io/bash)'

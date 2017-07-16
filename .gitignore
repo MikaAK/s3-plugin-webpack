@@ -36,7 +36,7 @@ node_modules
 .LSOverride
 
 # Icon must end with two \r
-Icon
+Icon
 
 # Thumbnails
 ._*
@@ -87,3 +87,15 @@ $RECYCLE.BIN/
 .env
 test/.tmp
 dist/
+
+npm-debug.log*
+.eslintcache
+/coverage
+/dist
+/local
+/reports
+/node_modules
+.idea
+.vscode
+*.sublime-project
+*.sublime-workspace
