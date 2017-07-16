@@ -2,34 +2,31 @@
   "name": "webpack-s3-plugin",
   "version": "1.0.0-rc.0",
   "description": "Uploads compiled assets to s3 after build",
-  "main": "dist/s3_plugin.js",
-  "scripts": {
-    "build": "webpack",
-    "prepublish": "npm run lint && npm run test && npm run build",
-    "test": "NODE_ENV='test' mocha -t 10000 --compilers js:babel-register",
-    "lint": "eslint ./src ./test",
-    "watch": "webpack --watch",
-    "prep:major": "npm run build && npm version major",
-    "prep:minor": "npm run build && npm version minor",
-    "prep:patch": "npm run build && npm version patch"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git@github.com:MikaAK/s3-plugin-webpack.git"
-  },
-  "keywords": [
-    "s3",
-    "webpack",
-    "node",
-    "upload",
-    "production"
-  ],
   "author": "Mika Kalathil",
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/MikaAK/s3-plugin-webpack/issues"
+  "main": "dist/cjs.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "webpack-defaults": "webpack-defaults",
+    "start": "npm run build -- -w",
+    "appveyor:test": "npm run test",
+    "build": "cross-env NODE_ENV=production babel src -d dist --ignore 'src/**/*.test.js'",
+    "clean": "del-cli dist",
+    "lint": "eslint --cache src test",
+    "lint-staged": "lint-staged",
+    "prebuild": "npm run clean",
+    "prepublish": "npm run build",
+    "release": "standard-version",
+    "security": "nsp check",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --collectCoverageFrom='src/**/*.js' --coverage",
+    "travis:lint": "npm run lint && npm run security",
+    "travis:test": "npm run test -- --runInBand",
+    "travis:coverage": "npm run test:coverage -- --runInBand"
   },
-  "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
   "dependencies": {
     "aws-sdk": "^2.4.1",
     "cdnizer": "^1.1.5",
@@ -39,19 +36,55 @@
     "s3": "^4.4.0"
   },
   "devDependencies": {
-    "babel-loader": "^6.2.4",
-    "babel-preset-es2015": "^6.9.0",
-    "babel-register": "^6.9.0",
-    "chai": "^3.4.1",
-    "css-loader": "^0.23.1",
-    "dotenv": "^2.0.0",
-    "eslint": "^2.13.0",
-    "eslint-loader": "^1.3.0",
-    "extract-text-webpack-plugin": "^1.0.1",
-    "file-loader": "^0.10.1",
-    "html-webpack-plugin": "^2.21.0",
-    "mocha": "^2.5.3",
-    "sinon": "^1.17.4",
-    "webpack": "^1.13.1"
+    "babel-cli": "^6.24.1",
+    "babel-jest": "^20.0.3",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.6.0",
+    "cross-env": "^5.0.1",
+    "css-loader": "^0.28.4",
+    "del-cli": "^1.1.0",
+    "dotenv": "^4.0.0",
+    "eslint": "^4.2.0",
+    "eslint-config-webpack": "^1.2.5",
+    "eslint-plugin-import": "^2.7.0",
+    "extract-text-webpack-plugin": "^3.0.0",
+    "file-loader": "^0.11.2",
+    "html-webpack-plugin": "^2.29.0",
+    "jest": "^20.0.4",
+    "lint-staged": "^4.0.1",
+    "nsp": "^2.6.3",
+    "pre-commit": "^1.2.2",
+    "standard-version": "^4.2.0",
+    "webpack": "^3.3.0",
+    "webpack-defaults": "^1.5.0"
+  },
+  "engines": {
+    "node": ">= 4.3 < 5.0.0 || >= 5.10"
+  },
+  "peerDependencies": {
+    "webpack": "^2.0.0 || ^3.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:webpack-contrib/s3-plugin-webpack.git"
+  },
+  "bugs": {
+    "url": "https://github.com/webpack-contrib/s3-plugin-webpack/issues"
+  },
+  "homepage": "https://github.com/webpack-contrib/s3-plugin-webpack",
+  "keywords": [
+    "s3",
+    "webpack",
+    "node",
+    "upload",
+    "production"
+  ],
+  "pre-commit": "lint-staged",
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix",
+      "git add"
+    ]
   }
 }

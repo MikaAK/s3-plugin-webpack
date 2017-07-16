@@ -1,20 +1,30 @@
+[![npm][npm]][npm-url]
+[![node][node]][node-url]
+[![deps][deps]][deps-url]
+[![tests][tests]][tests-url]
+[![coverage][cover]][cover-url]
+[![chat][chat]][chat-url]
 
-S3 Plugin
-===
-[![Travis Badge](https://travis-ci.org/MikaAK/s3-plugin-webpack.svg?branch=master)](https://travis-ci.org/MikaAK/s3-plugin-webpack)
-[![Code Climate](https://codeclimate.com/github/MikaAK/s3-plugin-webpack/badges/gpa.svg)](https://codeclimate.com/github/MikaAK/s3-plugin-webpack)
+<div align="center">
+  <img width="200" height="200"
+    src="https://cdn.worldvectorlogo.com/logos/aws-s3.svg">
+  <a href="https://github.com/webpack/webpack">
+    <img width="200" height="200"
+      src="https://webpack.js.org/assets/icon-square-big.svg">
+  </a>
+  <h1>S3 Plugin</h1>
+  <p>This plugin will upload all built assets to s3.</p>
+</div>
 
-This plugin will upload all built assets to s3
-
-
-### Install Instructions
+<h2 align="center">Install</h2>
 
 ```bash
 $ npm i webpack-s3-plugin
 ```
-Note: This plugin needs NodeJS > 0.12.0
+Note: This plugin needs NodeJS > 4.3.0
 
-### Usage Instructions
+<h2 align="center">Usage</h2>
+
 > I notice a lot of people are setting the directory option when the files are part of their build. Please don't set   directory if your uploading your build. Using the directory option reads the files after compilation to upload instead of from the build process.
 
 > You can also use a [credentials file](https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) from AWS.
@@ -207,16 +217,61 @@ var config = {
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
 - `progress`: Enable progress bar (defaults true)
 
-### Contributing
-All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
-For tests you will need to either have the environment variables set or setup a .env file. There's a .env.sample so you can `cp .env.sample .env` and fill it in. Make sure to add any new environment variables.
 
-#### Commands to be aware of
-###### *WARNING*: The test suit generates random files for certain checks. Ensure you delete files leftover on your Bucket.
-- `npm run test` - Run test suit (You must have the .env file setup)
-- `npm run build` - Run build
+<h2 align="center">Maintainers</h2>
 
-### Thanks
+<table>
+  <tbody>
+    <tr>
+      <td align="center">
+        <img width="150" height="150"
+        src="https://avatars3.githubusercontent.com/u/4650931?v=3&s=150">
+        </br>
+        <a href="https://github.com/MikaAK">Mika Kalathil</a>
+      </td>
+      <td align="center">
+        <img width="150" height="150"
+        src="https://avatars3.githubusercontent.com/u/166921?v=3&s=150">
+        </br>
+        <a href="https://github.com/bebraw">Juho Vepsäläinen</a>
+      </td>
+      <td align="center">
+        <img width="150" height="150"
+        src="https://avatars2.githubusercontent.com/u/8420490?v=3&s=150">
+        </br>
+        <a href="https://github.com/d3viant0ne">Joshua Wiens</a>
+      </td>
+      <td align="center">
+        <img width="150" height="150"
+        src="https://avatars3.githubusercontent.com/u/533616?v=3&s=150">
+        </br>
+        <a href="https://github.com/SpaceK33z">Kees Kluskens</a>
+      </td>
+      <td align="center">
+        <img width="150" height="150"
+        src="https://avatars3.githubusercontent.com/u/3408176?v=3&s=150">
+        </br>
+        <a href="https://github.com/TheLarkInn">Sean Larkin</a>
+      </td>
+    </tr>
+  <tbody>
+</table>
 
-- Thanks to [@Omer](https://github.com/Omer) for fixing credentials from `~/.aws/credentials`
-- Thanks to [@lostjimmy](https://github.com/lostjimmy) for pointing out `path.sep` for Windows compatibility
+
+[npm]: https://img.shields.io/npm/v/s3-plugin-webpack.svg
+[npm-url]: https://npmjs.com/package/s3-plugin-webpack
+
+[node]: https://img.shields.io/node/v/s3-plugin-webpack.svg
+[node-url]: https://nodejs.org
+
+[deps]: https://david-dm.org/webpack-contrib/s3-plugin-webpack.svg
+[deps-url]: https://david-dm.org/webpack-contrib/s3-plugin-webpack
+
+[tests]: http://img.shields.io/travis/webpack-contrib/s3-plugin-webpack.svg
+[tests-url]: https://travis-ci.org/webpack-contrib/s3-plugin-webpack
+
+[cover]: https://coveralls.io/repos/github/webpack-contrib/s3-plugin-webpack/badge.svg
+[cover-url]: https://coveralls.io/github/webpack-contrib/s3-plugin-webpack
+
+[chat]: https://badges.gitter.im/webpack/webpack.svg
+[chat-url]: https://gitter.im/webpack/webpack

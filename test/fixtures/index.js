@@ -1,9 +1,9 @@
-require('./styles.css')
+require('./styles.css');
 
-var test = 'Eh',
-    pillow = function(a) {
-      return `${a}, Likes monkies`
-    }
+let test = 'Eh',
+  pillow = function (a) {
+    return `${a}, Likes monkies`;
+  };
 
-pillow(test)
-export default pillow
+pillow(test);
+export default pillow;
