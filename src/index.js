@@ -1,13 +1,12 @@
 import http from 'http';
 import https from 'https';
-import s3 from 's3';
 import fs from 'fs';
 import path from 'path';
+import s3 from 's3';
 import ProgressBar from 'progress';
 import cdnizer from 'cdnizer';
 import _ from 'lodash';
 import aws from 'aws-sdk';
-
 import {
   addSeperatorToPath,
   addTrailingS3Sep,
@@ -20,7 +19,8 @@ import {
   DEFAULT_TRANSFORM,
 } from './helpers';
 
-http.globalAgent.maxSockets = https.globalAgent.maxSockets = 50;
+http.globalAgent.maxSockets = 50;
+https.globalAgent.maxSockets = 50;
 
 const compileError = (compilation, error) => {
   compilation.errors.push(new Error(error));
@@ -256,7 +256,8 @@ export default class S3Plugin {
 
   uploadFile(fileName, file) {
     let Key = this.options.basePath + fileName;
-    const s3Params = _.mapValues(this.uploadOptions, optionConfig => (_.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig));
+    const s3Params = _.mapValues(this.uploadOptions, optionConfig =>
+      (_.isFunction(optionConfig) ? optionConfig(fileName, file) : optionConfig));
 
     // avoid noname folders in bucket
     if (Key[0] === '/') {
