@@ -67,12 +67,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:MikaAK/s3-plugin-webpack.git"
+    "url": "git@github.com:webpack-contrib/s3-plugin-webpack.git"
   },
   "bugs": {
-    "url": "https://github.com/MikaAK/s3-plugin-webpack/issues"
+    "url": "https://github.com/webpack-contrib/s3-plugin-webpack/issues"
   },
-  "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
+  "homepage": "https://github.com/webpack-contrib/s3-plugin-webpack",
   "keywords": [
     "s3",
     "webpack",
