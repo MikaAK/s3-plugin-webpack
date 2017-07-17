@@ -1,6 +1,5 @@
 import http from 'http'
 import https from 'https'
-import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
@@ -212,7 +211,7 @@ module.exports = class S3Plugin {
     if (this.isConnected)
       return
 
-    this.client = s3.createClient(this.clientConfig)
+    this.client = new aws.S3(this.clientConfig.s3Options) // s3.createClient(this.clientConfig)
     this.isConnected = true
   }
 
@@ -238,12 +237,12 @@ module.exports = class S3Plugin {
     })
 
     uploadFiles.forEach(function({upload}, i) {
-      upload.on('progress', function() {
+      upload.on('httpUploadProgress', function() {
         var definedModifier,
             progressValue
 
-        progressTotal[i] = this.progressTotal
-        progressAmount[i] = this.progressAmount
+        progressTotal[i] = this.total
+        progressAmount[i] = this.loaded
         definedModifier = countUndefined(progressTotal) / 10
         progressValue = calculateProgress() - definedModifier
 
@@ -283,20 +282,18 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    const upload = this.client.uploadFile({
-      localFile: file,
-      s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
-    })
+    var Body = fs.createReadStream(file)
+
+    const upload = this.client.uploadFile(
+      _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
+    )
 
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    const promise = new Promise((resolve, reject) => {
-      upload.on('error', reject)
-      upload.on('end', () => resolve(file))
-    })
 
-    return {upload, promise}
+
+    return {upload, promise: upload.promise()}
   }
 
   invalidateCloudfront() {
