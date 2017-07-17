@@ -435,7 +435,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var Body = _fs2.default.createReadStream(file);
 
-	      var upload = this.client.uploadFile(_lodash2.default.merge({ Key: Key, Body: Body }, _helpers.DEFAULT_UPLOAD_OPTIONS, s3Params));
+	      var upload = this.client.upload(_lodash2.default.merge({ Key: Key, Body: Body }, _helpers.DEFAULT_UPLOAD_OPTIONS, s3Params));
 
 	      if (!this.noCdnizer) this.cdnizerOptions.files.push('*' + fileName + '*');
 

@@ -284,14 +284,12 @@ module.exports = class S3Plugin {
 
     var Body = fs.createReadStream(file)
 
-    const upload = this.client.uploadFile(
+    const upload = this.client.upload(
       _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     )
 
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
-
-
 
     return {upload, promise: upload.promise()}
   }
