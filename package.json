@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git@github.com:MikaAK/s3-plugin-webpack.git"
+    "url": "git@github.com:webpack-contrib/s3-plugin-webpack.git"
   },
   "keywords": [
     "s3",
@@ -27,9 +27,9 @@
   "author": "Mika Kalathil",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/MikaAK/s3-plugin-webpack/issues"
+    "url": "https://github.com/webpack-contrib/s3-plugin-webpack/issues"
   },
-  "homepage": "https://github.com/MikaAK/s3-plugin-webpack",
+  "homepage": "https://github.com/webpack-contrib/s3-plugin-webpack",
   "dependencies": {
     "aws-sdk": "^2.4.1",
     "cdnizer": "^1.1.5",
