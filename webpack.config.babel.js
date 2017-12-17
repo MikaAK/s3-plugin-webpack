@@ -1,5 +1,5 @@
-import path from 'path'
-import {DefinePlugin} from 'webpack'
+const path = require('path');
+const DefinePlugin = require('webpack').DefinePlugin;
 
 const CONTEXT = path.resolve(__dirname),
       {NODE_ENV} = process.env,
@@ -26,12 +26,12 @@ var config = {
   ],
 
   module: {
-    preLoaders: [{
-      test: /\.js/,
-      loader: 'eslint',
-      include: [SRC_PATH],
-      exclude: [NODE_MODULES]
-    }],
+    // preLoaders: [{
+    //   test: /\.js/,
+    //   loader: 'eslint',
+    //   include: [SRC_PATH],
+    //   exclude: [NODE_MODULES]
+    // }],
     loaders: [{
       test: /\.js/,
       loader: 'babel',

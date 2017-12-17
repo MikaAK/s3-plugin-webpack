@@ -304,22 +304,42 @@ module.exports = class S3Plugin {
 
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
-        const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-        const cloudfront = new aws.CloudFront()
-
-        if (accessKeyId && secretAccessKey)
-          cloudfront.config.update({accessKeyId, secretAccessKey})
-
-        cloudfront.createInvalidation({
-          DistributionId: cloudfrontInvalidateOptions.DistributionId,
-          InvalidationBatch: {
-            CallerReference: Date.now().toString(),
-            Paths: {
-              Quantity: cloudfrontInvalidateOptions.Items.length,
-              Items: cloudfrontInvalidateOptions.Items
-            }
+        if (!_.isArray(cloudfrontInvalidateOptions.DistributionId)) {
+          cloudfrontInvalidateOptions.DistributionId = [cloudfrontInvalidateOptions.DistributionId]
+        }
+        var completedInvalidations = []
+        function success(invalidationId){
+          completedInvalidations.push(invalidationId)
+          if (completedInvalidations.length === cloudfrontInvalidateOptions.DistributionId.length) {
+            resolve(completedInvalidations);
           }
-        }, (err, res) => err ? reject(err) : resolve(res.Id))
+        }
+        for(var i = 0; i < cloudfrontInvalidateOptions.DistributionId.length; i++){
+          const {accessKeyId, secretAccessKey} = clientConfig.s3Options
+          const cloudfront = new aws.CloudFront()
+
+          if (accessKeyId && secretAccessKey)
+            cloudfront.config.update({accessKeyId, secretAccessKey})
+
+          cloudfront.createInvalidation({
+            DistributionId: cloudfrontInvalidateOptions.DistributionId[i],
+            InvalidationBatch: {
+              CallerReference: Date.now().toString(),
+              Paths: {
+                Quantity: cloudfrontInvalidateOptions.Items.length,
+                Items: cloudfrontInvalidateOptions.Items
+              }
+            }
+          }, function(err, res){
+            console.log('CloudFront Distribution Invalidation');
+            console.log(err, res);
+            if(err){
+              reject(err);
+            }else{
+              success(res.Id);
+            }
+          })
+        }
       } else {
         return resolve(null)
       }

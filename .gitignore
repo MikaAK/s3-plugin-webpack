@@ -86,4 +86,4 @@ $RECYCLE.BIN/
 
 .env
 test/.tmp
-dist/
+#dist/
