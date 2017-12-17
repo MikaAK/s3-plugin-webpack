@@ -331,8 +331,6 @@ module.exports = class S3Plugin {
               }
             }
           }, function(err, res){
-            console.log('CloudFront Distribution Invalidation');
-            console.log(err, res);
             if(err){
               reject(err);
             }else{
