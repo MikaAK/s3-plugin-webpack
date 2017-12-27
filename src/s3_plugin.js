@@ -6,6 +6,7 @@ import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import aws from 'aws-sdk'
+import mime from 'mime/lite'
 
 import {
   addSeperatorToPath,
@@ -281,6 +282,10 @@ module.exports = class S3Plugin {
     // Remove Gzip from encoding if ico
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
+
+    if (s3Params.ContentType === undefined) {
+      s3Params.ContentType = mime.getType(fileName)
+    }
 
     var Body = fs.createReadStream(file)
 

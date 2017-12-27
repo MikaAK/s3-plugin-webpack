@@ -34,6 +34,7 @@
     "aws-sdk": "^2.175.0",
     "cdnizer": "^1.1.5",
     "lodash": "^4.13.0",
+    "mime": "^2.1.0",
     "progress": "^1.1.8",
     "recursive-readdir": "^2.0.0"
   },
@@ -49,6 +50,7 @@
     "extract-text-webpack-plugin": "^1.0.1",
     "file-loader": "^0.10.1",
     "html-webpack-plugin": "^2.21.0",
+    "json-loader": "^0.5.7",
     "mocha": "^2.5.3",
     "sinon": "^1.17.4",
     "webpack": "^1.13.1"
