@@ -348,7 +348,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    value: function connect() {
 	      if (this.isConnected) return;
 
-	      this.client = new _awsSdk2.default.S3(this.clientConfig.s3Options); // s3.createClient(this.clientConfig)
+	      this.client = new _awsSdk2.default.S3(this.clientConfig.s3Options);
 	      this.isConnected = true;
 	    }
 	  }, {
