@@ -19,7 +19,7 @@ Note: This plugin needs NodeJS > 0.12.0
 
 > You can also use a [credentials file](https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) from AWS.
 
-> s3Options default to `ACL: 'public-read'` so you may need to override if you have other needs. See [#28](https://github.com/MikaAK/s3-plugin-webpack/issues/28#issuecomment-309171024)
+> s3UploadOptions default to `ACL: 'public-read'` so you may need to override if you have other needs. See [#28](https://github.com/MikaAK/s3-plugin-webpack/issues/28#issuecomment-309171024)
 
 
 ##### Require `webpack-s3-plugin`
