@@ -1,12 +1,14 @@
 import http from 'http'
 import https from 'https'
-import s3 from 's3'
+// import s3 from 's3'
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
-import aws from 'aws-sdk'
+import AWS from 'aws-sdk'
+
+const packageJson = require('../package.json')
 
 import {
   addSeperatorToPath,
@@ -36,7 +38,8 @@ module.exports = class S3Plugin {
       directory,
       htmlFiles,
       basePathTransform = DEFAULT_TRANSFORM,
-      s3Options = {},
+      s3Options = {
+      },
       cdnizerOptions = {},
       s3UploadOptions = {},
       cloudfrontInvalidateOptions = {}
@@ -84,29 +87,27 @@ module.exports = class S3Plugin {
                              compiler.options.output.context ||
                              '.'
 
-    compiler.plugin('after-emit', (compilation, cb) => {
+    compiler.hooks.afterEmit.tapPromise(packageJson.name, async(compilation) => {
       var error
 
-      if (!hasRequiredUploadOpts)
+      if (!hasRequiredUploadOpts) {
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
+      }
 
       if (error) {
-        compileError(compilation, error)
-        cb()
+        return compileError(compilation, error)
       }
 
       if (isDirectoryUpload) {
         const dPath = addSeperatorToPath(this.options.directory)
 
-        this.getAllFilesRecursive(dPath)
-          .then((files) => this.handleFiles(files, cb))
-          .then(() => cb())
-          .catch(e => this.handleErrors(e, compilation, cb))
-      } else {
-        this.getAssetFiles(compilation)
+        return this.getAllFilesRecursive(dPath)
           .then((files) => this.handleFiles(files))
-          .then(() => cb())
-          .catch(e => this.handleErrors(e, compilation, cb))
+          .catch(e => this.handleErrors(e, compilation))
+      } else {
+        return this.getAssetFiles(compilation)
+          .then((files) => this.handleFiles(files))
+          .catch(e =>  this.handleErrors(e, compilation))
       }
     })
   }
@@ -118,9 +119,9 @@ module.exports = class S3Plugin {
       .then(() => this.invalidateCloudfront())
   }
 
-  handleErrors(error, compilation, cb) {
+  async handleErrors(error, compilation) {
     compileError(compilation, `S3Plugin: ${error}`)
-    cb()
+    throw error
   }
 
   getAllFilesRecursive(fPath) {
@@ -212,7 +213,15 @@ module.exports = class S3Plugin {
     if (this.isConnected)
       return
 
-    this.client = s3.createClient(this.clientConfig)
+    // https://github.com/aws/aws-sdk-js/issues/1157
+    // https://github.com/aws/aws-sdk-js/issues/965
+    // this.clientConfig.s3Options.signatureVersion = 'v2'
+    // this.clientConfig.s3Options.s3DisableBodySigning = true
+
+    /**
+     * @type {AWS.S3}
+     */
+    this.client = new AWS.S3(this.clientConfig.s3Options)
     this.isConnected = true
   }
 
@@ -283,20 +292,15 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    const upload = this.client.uploadFile({
-      localFile: file,
-      s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
-    })
-
-    if (!this.noCdnizer)
+    if (!this.noCdnizer) {
       this.cdnizerOptions.files.push(`*${fileName}*`)
+    }
 
-    const promise = new Promise((resolve, reject) => {
-      upload.on('error', reject)
-      upload.on('end', () => resolve(file))
-    })
-
-    return {upload, promise}
+    const upload = this.client.upload(
+      _.merge({Key, Body: fs.createReadStream(file)}, DEFAULT_UPLOAD_OPTIONS, s3Params)
+    )
+    
+    return {upload, promise: upload.promise()}
   }
 
   invalidateCloudfront() {
@@ -305,7 +309,7 @@ module.exports = class S3Plugin {
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
         const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-        const cloudfront = new aws.CloudFront()
+        const cloudfront = new AWS.CloudFront()
 
         if (accessKeyId && secretAccessKey)
           cloudfront.config.update({accessKeyId, secretAccessKey})
