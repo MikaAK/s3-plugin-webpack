@@ -7,6 +7,7 @@ import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import AWS from 'aws-sdk'
+import mime from 'mime'
 
 const packageJson = require('../package.json')
 
@@ -247,12 +248,12 @@ module.exports = class S3Plugin {
     })
 
     uploadFiles.forEach(function({upload}, i) {
-      upload.on('progress', function() {
+      upload.on('httpUploadProgress', function() {
         var definedModifier,
             progressValue
 
-        progressTotal[i] = this.progressTotal
-        progressAmount[i] = this.progressAmount
+        progressTotal[i] = this.total
+        progressAmount[i] = this.loaded
         definedModifier = countUndefined(progressTotal) / 10
         progressValue = calculateProgress() - definedModifier
 
@@ -294,6 +295,10 @@ module.exports = class S3Plugin {
 
     if (!this.noCdnizer) {
       this.cdnizerOptions.files.push(`*${fileName}*`)
+    }
+
+    if (s3Params.ContentType === undefined) {
+      s3Params.ContentType = mime.getType(fileName)
     }
 
     const upload = this.client.upload(
