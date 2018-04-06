@@ -299,7 +299,7 @@ module.exports = class S3Plugin {
     const upload = this.client.upload(
       _.merge({Key, Body: fs.createReadStream(file)}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     )
-    
+
     return {upload, promise: upload.promise()}
   }
 
