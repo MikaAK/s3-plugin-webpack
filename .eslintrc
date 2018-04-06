@@ -1,12 +1,12 @@
 {
   "root": true,
   "parserOptions": {
-    "ecmaVersion": "7",
+    "ecmaVersion": 8,
     "sourceType": "module",
     "ecmaFeatures": {
       "impliedStrict": true,
       "experimentalObjectRestSpread": true
-    },
+    }
   },
   "env": {
     "es6": true,
