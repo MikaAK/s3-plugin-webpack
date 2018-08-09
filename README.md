@@ -15,7 +15,7 @@ $ npm i webpack-s3-plugin
 Note: This plugin needs NodeJS > 0.12.0
 
 ### Usage Instructions
-> I notice a lot of people are setting the `directory` option when the files are part of their build. Please don't set   `directory` if you are uploading your build. Using the `directory` option reads the files after compilation to upload instead of from the build process.
+> I notice a lot of people are setting the `directory` option when the files are part of their build. Please don't set   `directory` if you're uploading your build. Using the `directory` option reads the files after compilation to upload instead of from the build process.
 
 > You can also use a [credentials file](https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) from AWS.
 
