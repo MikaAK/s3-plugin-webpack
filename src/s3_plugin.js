@@ -1,6 +1,6 @@
 import http from 'http'
 import https from 'https'
-import s3 from 's3'
+import s3 from 's3-client'
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
