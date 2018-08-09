@@ -15,7 +15,7 @@ $ npm i webpack-s3-plugin
 Note: This plugin needs NodeJS > 0.12.0
 
 ### Usage Instructions
-> I notice a lot of people are setting the directory option when the files are part of their build. Please don't set   directory if your uploading your build. Using the directory option reads the files after compilation to upload instead of from the build process.
+> I notice a lot of people are setting the `directory` option when the files are part of their build. Please don't set   `directory` if you're uploading your build. Using the `directory` option reads the files after compilation to upload instead of from the build process.
 
 > You can also use a [credentials file](https://blogs.aws.amazon.com/security/post/Tx3D6U6WSFGOK2H/A-New-and-Standardized-Way-to-Manage-Credentials-in-the-AWS-SDKs) from AWS.
 
@@ -195,14 +195,14 @@ var config = {
 ### Options
 
 - `exclude`: A Pattern to match for excluded content. Behaves similarly to webpack's loader configuration.
-- `include`: A Pattern to match for included content. Behaves the same as the `exclude`.
-- `s3Options`: Provide keys for upload extention of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
+- `include`: A Pattern to match for included content. Behaves the same as `exclude`.
+- `s3Options`: Provide keys for upload options of [s3Config](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/Config.html#constructor-property)
 - `s3UploadOptions`: Provide upload options [putObject](http://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/S3.html#putObject-property )
-- `basePath`: Provide the namespace where upload files on S3
-- `directory`: Provide a directory to upload (if not supplied will upload js/css from compilation)
+- `basePath`: Provide the namespace of uploaded files on S3
+- `directory`: Provide a directory to upload (if not supplied, will upload js/css from compilation)
 - `htmlFiles`: Html files to cdnize (defaults to all in output directory)
 - `cdnizerCss`: Config for css cdnizer check below
-- `noCdnizer`: Disable cdnizer (defaults true if no cdnizerOptions passed)
+- `noCdnizer`: Disable cdnizer (defaults to true if no cdnizerOptions passed)
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
 - `progress`: Enable progress bar (defaults true)
