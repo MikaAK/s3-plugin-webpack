@@ -86,4 +86,7 @@ $RECYCLE.BIN/
 
 .env
 test/.tmp
-dist/
+
+.idea/
+
+s3-plugin-webpack.iml

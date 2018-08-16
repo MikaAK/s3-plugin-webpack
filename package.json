@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack",
     "prepublish": "npm run lint && npm run test && npm run build",
-    "test": "NODE_ENV='test' mocha -t 10000 --compilers js:babel-register",
+    "test": "NODE_ENV='test' mocha -t 10000 --require babel-register",
     "lint": "eslint ./src ./test",
     "watch": "webpack --watch",
     "prep:major": "npm run build && npm version major",
@@ -34,9 +34,9 @@
     "aws-sdk": "^2.282.1",
     "cdnizer": "^2.0.0",
     "lodash": "^4.17.10",
+    "mime": "^2.3.1",
     "progress": "^1.1.8",
-    "recursive-readdir": "^2.0.0",
-    "s3-client": "^4.4.1"
+    "recursive-readdir": "^2.0.0"
   },
   "devDependencies": {
     "babel-loader": "^6.2.4",
@@ -51,6 +51,7 @@
     "file-loader": "^0.10.1",
     "html-webpack-plugin": "^2.21.0",
     "mocha": "5.2.0",
+    "json-loader": "^0.5.7",
     "sinon": "^1.17.4",
     "webpack": "^1.13.1"
   }
