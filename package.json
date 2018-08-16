@@ -5,7 +5,7 @@
   "main": "dist/s3_plugin.js",
   "scripts": {
     "build": "webpack",
-    "prepublish": "npm run lint && npm run test && npm run build",
+    "prepublishOnly": "npm run lint && npm run test && npm run build",
     "test": "NODE_ENV='test' mocha -t 10000 --require babel-register",
     "lint": "eslint ./src ./test",
     "watch": "webpack --watch",
