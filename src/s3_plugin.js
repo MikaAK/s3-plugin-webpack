@@ -224,34 +224,22 @@ module.exports = class S3Plugin {
   }
 
   setupProgressBar(uploadFiles) {
-    var progressAmount = Array(uploadFiles.length)
-    var progressTotal = Array(uploadFiles.length)
-    var progressTracker = 0
-    const calculateProgress = () => _.sum(progressAmount) / _.sum(progressTotal)
-    const countUndefined = (array) => _.reduce(array, (res, value) => {
-      return res += _.isUndefined(value) ? 1 : 0
-    }, 0)
+    const progressTotal = uploadFiles
+      .reduce((acc, {upload}) => upload.totalBytes + acc , 0)
 
     const progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
       incomplete: '∆',
-      total: 100
+      total: progressTotal
     })
 
+    var progressValue = 0
+
     uploadFiles.forEach(function({upload}, i) {
-      upload.on('httpUploadProgress', function() {
-        var definedModifier,
-            progressValue
+      upload.on('httpUploadProgress', function({loaded}) {
+        progressValue += loaded
 
-        progressTotal[i] = this.total
-        progressAmount[i] = this.loaded
-        definedModifier = countUndefined(progressTotal) / 10
-        progressValue = calculateProgress() - definedModifier
-
-        if (progressValue !== progressTracker) {
-          progressBar.update(progressValue)
-          progressTracker = progressValue
-        }
+        progressBar.update(progressValue)
       })
     })
   }
