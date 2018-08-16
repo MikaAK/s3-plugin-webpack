@@ -90,3 +90,4 @@ test/.tmp
 .idea/
 
 s3-plugin-webpack.iml
+dist/
