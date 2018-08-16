@@ -1,12 +1,13 @@
 import http from 'http'
 import https from 'https'
-import s3 from 's3-client'
+
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
-import aws from 'aws-sdk'
+import {S3, CloudFront} from 'aws-sdk'
+import mime from 'mime/lite'
 
 import {
   addSeperatorToPath,
@@ -212,7 +213,7 @@ module.exports = class S3Plugin {
     if (this.isConnected)
       return
 
-    this.client = s3.createClient(this.clientConfig)
+    this.client = new S3(this.clientConfig.s3Options)
     this.isConnected = true
   }
 
@@ -238,12 +239,12 @@ module.exports = class S3Plugin {
     })
 
     uploadFiles.forEach(function({upload}, i) {
-      upload.on('progress', function() {
+      upload.on('httpUploadProgress', function() {
         var definedModifier,
             progressValue
 
-        progressTotal[i] = this.progressTotal
-        progressAmount[i] = this.progressAmount
+        progressTotal[i] = this.total
+        progressAmount[i] = this.loaded
         definedModifier = countUndefined(progressTotal) / 10
         progressValue = calculateProgress() - definedModifier
 
@@ -283,20 +284,20 @@ module.exports = class S3Plugin {
     if (/\.ico/.test(fileName) && s3Params.ContentEncoding === 'gzip')
       delete s3Params.ContentEncoding
 
-    const upload = this.client.uploadFile({
-      localFile: file,
-      s3Params: _.merge({Key}, DEFAULT_UPLOAD_OPTIONS, s3Params)
-    })
+    if (s3Params.ContentType === undefined) {
+      s3Params.ContentType = mime.getType(fileName)
+    }
+
+    var Body = fs.createReadStream(file)
+
+    const upload = this.client.upload(
+      _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
+    )
 
     if (!this.noCdnizer)
       this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    const promise = new Promise((resolve, reject) => {
-      upload.on('error', reject)
-      upload.on('end', () => resolve(file))
-    })
-
-    return {upload, promise}
+    return {upload, promise: upload.promise()}
   }
 
   invalidateCloudfront() {
@@ -305,7 +306,7 @@ module.exports = class S3Plugin {
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
         const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-        const cloudfront = new aws.CloudFront()
+        const cloudfront = new CloudFront()
 
         if (accessKeyId && secretAccessKey)
           cloudfront.config.update({accessKeyId, secretAccessKey})

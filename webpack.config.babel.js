@@ -37,6 +37,9 @@ var config = {
       loader: 'babel',
       include: [SRC_PATH, createPath('test')],
       exclude: [NODE_MODULES]
+    }, {
+      test: /\.json$/,
+      loader: 'json-loader',
     }]
   },
 
@@ -50,7 +53,7 @@ var config = {
   ],
 
   resolve: {
-    extensions: ['.js', '']
+    extensions: ['.js', '.json', '']
   }
 }
 

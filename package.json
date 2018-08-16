@@ -35,8 +35,7 @@
     "cdnizer": "^2.0.0",
     "lodash": "^4.17.10",
     "progress": "^1.1.8",
-    "recursive-readdir": "^2.0.0",
-    "s3-client": "^4.4.1"
+    "recursive-readdir": "^2.0.0"
   },
   "devDependencies": {
     "babel-loader": "^6.2.4",
@@ -51,6 +50,7 @@
     "file-loader": "^0.10.1",
     "html-webpack-plugin": "^2.21.0",
     "mocha": "5.2.0",
+    "json-loader": "^0.5.7",
     "sinon": "^1.17.4",
     "webpack": "^1.13.1"
   }
