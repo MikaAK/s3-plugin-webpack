@@ -1,6 +1,7 @@
 import dotenv from 'dotenv'
 
-dotenv.load()
+if (!process.env.CI)
+  dotenv.load()
 
 const {
   AWS_BUCKET,
@@ -9,6 +10,13 @@ const {
   AWS_SECRET_ACCESS_KEY,
   CLOUDFRONT_DISTRIBUTION_ID
 } = process.env
+
+console.log(
+  AWS_BUCKET,
+  AWS_REGION,
+  AWS_ACCESS_KEY,
+  AWS_SECRET_ACCESS_KEY
+)
 
 export default {
   AWS_BUCKET,
