@@ -1,13 +1,14 @@
 import http from 'http'
 import https from 'https'
-
 import fs from 'fs'
 import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
-import {S3, CloudFront} from 'aws-sdk'
 import mime from 'mime/lite'
+import {S3, CloudFront} from 'aws-sdk'
+
+import packageJson from '../package.json'
 
 import {
   addSeperatorToPath,
@@ -85,29 +86,24 @@ module.exports = class S3Plugin {
                              compiler.options.output.context ||
                              '.'
 
-    compiler.plugin('after-emit', (compilation, cb) => {
+    compiler.hooks.afterEmit.tapPromise(packageJson.name, async(compilation) => {
       var error
 
       if (!hasRequiredUploadOpts)
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
 
-      if (error) {
-        compileError(compilation, error)
-        cb()
-      }
+      if (error) return compileError(compilation, error)
 
       if (isDirectoryUpload) {
         const dPath = addSeperatorToPath(this.options.directory)
 
-        this.getAllFilesRecursive(dPath)
-          .then((files) => this.handleFiles(files, cb))
-          .then(() => cb())
-          .catch(e => this.handleErrors(e, compilation, cb))
-      } else {
-        this.getAssetFiles(compilation)
+        return this.getAllFilesRecursive(dPath)
           .then((files) => this.handleFiles(files))
-          .then(() => cb())
-          .catch(e => this.handleErrors(e, compilation, cb))
+          .catch(e => this.handleErrors(e, compilation))
+      } else {
+        return this.getAssetFiles(compilation)
+          .then((files) => this.handleFiles(files))
+          .catch(e =>  this.handleErrors(e, compilation))
       }
     })
   }
@@ -119,9 +115,9 @@ module.exports = class S3Plugin {
       .then(() => this.invalidateCloudfront())
   }
 
-  handleErrors(error, compilation, cb) {
+  async handleErrors(error, compilation) {
     compileError(compilation, `S3Plugin: ${error}`)
-    cb()
+    throw error
   }
 
   getAllFilesRecursive(fPath) {
@@ -225,7 +221,7 @@ module.exports = class S3Plugin {
 
   setupProgressBar(uploadFiles) {
     const progressTotal = uploadFiles
-      .reduce((acc, {upload}) => upload.totalBytes + acc , 0)
+      .reduce((acc, {upload}) => upload.totalBytes + acc, 0)
 
     const progressBar = new ProgressBar('Uploading [:bar] :percent :etas', {
       complete: '>',
@@ -235,7 +231,7 @@ module.exports = class S3Plugin {
 
     var progressValue = 0
 
-    uploadFiles.forEach(function({upload}, i) {
+    uploadFiles.forEach(function({upload}) {
       upload.on('httpUploadProgress', function({loaded}) {
         progressValue += loaded
 
@@ -276,8 +272,7 @@ module.exports = class S3Plugin {
       s3Params.ContentType = mime.getType(fileName)
     }
 
-    var Body = fs.createReadStream(file)
-
+    const Body = fs.createReadStream(file)
     const upload = this.client.upload(
       _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     )
