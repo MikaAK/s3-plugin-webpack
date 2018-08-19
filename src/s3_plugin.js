@@ -5,10 +5,10 @@ import path from 'path'
 import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
-import AWS from 'aws-sdk'
-import mime from 'mime'
+import mime from 'mime/lite'
+import {S3, CloudFront} from 'aws-sdk'
 
-const packageJson = require('../package.json')
+import packageJson from '../package.json'
 
 import {
   addSeperatorToPath,
@@ -38,8 +38,7 @@ module.exports = class S3Plugin {
       directory,
       htmlFiles,
       basePathTransform = DEFAULT_TRANSFORM,
-      s3Options = {
-      },
+      s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
       cloudfrontInvalidateOptions = {}
@@ -90,13 +89,10 @@ module.exports = class S3Plugin {
     compiler.hooks.afterEmit.tapPromise(packageJson.name, async(compilation) => {
       var error
 
-      if (!hasRequiredUploadOpts) {
+      if (!hasRequiredUploadOpts)
         error = `S3Plugin-RequiredS3UploadOpts: ${REQUIRED_S3_UP_OPTS.join(', ')}`
-      }
 
-      if (error) {
-        return compileError(compilation, error)
-      }
+      if (error) return compileError(compilation, error)
 
       if (isDirectoryUpload) {
         const dPath = addSeperatorToPath(this.options.directory)
@@ -213,10 +209,7 @@ module.exports = class S3Plugin {
     if (this.isConnected)
       return
 
-    /**
-     * @type {AWS.S3}
-     */
-    this.client = new AWS.S3(this.clientConfig.s3Options)
+    this.client = new S3(this.clientConfig.s3Options)
     this.isConnected = true
   }
 
@@ -279,8 +272,9 @@ module.exports = class S3Plugin {
       s3Params.ContentType = mime.getType(fileName)
     }
 
+    const Body = fs.createReadStream(file)
     const upload = this.client.upload(
-      _.merge({Key, Body: fs.createReadStream(file)}, DEFAULT_UPLOAD_OPTIONS, s3Params)
+      _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
     )
 
     if (!this.noCdnizer)
@@ -295,7 +289,7 @@ module.exports = class S3Plugin {
     return new Promise(function(resolve, reject) {
       if (cloudfrontInvalidateOptions.DistributionId) {
         const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-        const cloudfront = new AWS.CloudFront()
+        const cloudfront = new CloudFront()
 
         if (accessKeyId && secretAccessKey)
           cloudfront.config.update({accessKeyId, secretAccessKey})
