@@ -110,13 +110,23 @@ export default {
     return _.extend({
       entry: ENTRY_PATH,
       module: {
-        loaders: [{
+        rules: [{
           test: /\.png/,
-          loader: 'file?name=[name]-[hash].[ext]'
-        }, {
+          use: [{
+            loader: 'file-loader',
+            options: {
+              name: '[name]-[hash].[ext]'
+            }
+          }]
+        },
+        {
           test: /\.css$/,
-          loader: ExtractTextPlugin.extract('css')
-        }]
+          use: ExtractTextPlugin.extract({
+            fallback: 'style-loader',
+            use: 'css-loader'
+          })
+        }
+        ]
       },
       plugins: [
         new HtmlWebpackPlugin(),
@@ -133,8 +143,15 @@ export default {
   runWebpackConfig({config}) {
     this.createOutputPath()
 
-    return new Promise(function(resolve) {
+    return new Promise(function(resolve, reject) {
       webpack(config, function(err, stats) {
+        if (err) {
+          reject(err)
+
+          return
+        }
+
+        // console.log(JSON.stringify(arguments, null, 2))
         if (stats.toJson().errors.length)
           resolve({errors: stats.toJson().errors})
         else

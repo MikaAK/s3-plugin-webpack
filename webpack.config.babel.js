@@ -26,21 +26,21 @@ var config = {
   ],
 
   module: {
-    preLoaders: [{
-      test: /\.js/,
-      loader: 'eslint',
-      include: [SRC_PATH],
-      exclude: [NODE_MODULES]
-    }],
-    loaders: [{
-      test: /\.js/,
-      loader: 'babel',
-      include: [SRC_PATH, createPath('test')],
-      exclude: [NODE_MODULES]
-    }, {
-      test: /\.json$/,
-      loader: 'json-loader',
-    }]
+    rules: [
+      {
+        enforce: 'pre',
+        test: /\.js/,
+        loader: 'eslint-loader',
+        include: [SRC_PATH],
+        exclude: [NODE_MODULES]
+      },
+      {
+        test: /\.js/,
+        loader: 'babel-loader',
+        include: [SRC_PATH, createPath('test')],
+        exclude: [NODE_MODULES]
+      }
+    ]
   },
 
   externals: NODE_ENV === 'test' ? [] : [
@@ -50,11 +50,7 @@ var config = {
     's3',
     'recursive-readdir',
     'progress'
-  ],
-
-  resolve: {
-    extensions: ['.js', '.json', '']
-  }
+  ]
 }
 
 module.exports = config
