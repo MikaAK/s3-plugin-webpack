@@ -286,27 +286,38 @@ module.exports = class S3Plugin {
   invalidateCloudfront() {
     const {clientConfig, cloudfrontInvalidateOptions} = this
 
-    return new Promise(function(resolve, reject) {
-      if (cloudfrontInvalidateOptions.DistributionId) {
-        const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-        const cloudfront = new CloudFront()
+    if (cloudfrontInvalidateOptions.DistributionId) {
+      const {accessKeyId, secretAccessKey} = clientConfig.s3Options
+      const cloudfront = new CloudFront()
 
-        if (accessKeyId && secretAccessKey)
-          cloudfront.config.update({accessKeyId, secretAccessKey})
+      if (!_.isArray(cloudfrontInvalidateOptions.DistributionId))
+        cloudfrontInvalidateOptions.DistributionId = [cloudfrontInvalidateOptions.DistributionId]
 
-        cloudfront.createInvalidation({
-          DistributionId: cloudfrontInvalidateOptions.DistributionId,
-          InvalidationBatch: {
-            CallerReference: Date.now().toString(),
-            Paths: {
-              Quantity: cloudfrontInvalidateOptions.Items.length,
-              Items: cloudfrontInvalidateOptions.Items
+      if (accessKeyId && secretAccessKey)
+        cloudfront.config.update({accessKeyId, secretAccessKey})
+
+      const cloudfrontInvalidations = cloudfrontInvalidateOptions.DistributionId
+        .map((distributionId) => new Promise((resolve, reject) => {
+          cloudfront.createInvalidation({
+            DistributionId: cloudfrontInvalidateOptions.DistributionId,
+            InvalidationBatch: {
+              CallerReference: Date.now().toString(),
+              Paths: {
+                Quantity: cloudfrontInvalidateOptions.Items.length,
+                Items: cloudfrontInvalidateOptions.Items
+              }
             }
-          }
-        }, (err, res) => err ? reject(err) : resolve(res.Id))
-      } else {
-        return resolve(null)
-      }
-    })
+          }, (err, res) => {
+            if (err)
+              reject(err)
+            else
+              success(res.Id)
+          })
+        }))
+
+      return Promise.all(cloudfrontInvalidations)
+    } else {
+      return Promise.resolve(null)
+    }
   }
 }
