@@ -262,7 +262,7 @@ module.exports = class S3Plugin {
     // avoid noname folders in bucket
     if (Key[0] === '/')
       Key = Key.substr(1)
-  
+
     if (s3Params.ContentType === undefined)
       s3Params.ContentType = mime.getType(fileName)
 
