@@ -86,12 +86,8 @@ $RECYCLE.BIN/
 
 .env
 test/.tmp
-<<<<<<< HEAD
 
 .idea/
 
 s3-plugin-webpack.iml
 dist/
-=======
-#dist/
->>>>>>> 0a3e6ad40b9e70300b6870319ba0c0e6d8e77ae5
