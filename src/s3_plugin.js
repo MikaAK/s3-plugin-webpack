@@ -297,9 +297,9 @@ module.exports = class S3Plugin {
         cloudfront.config.update({accessKeyId, secretAccessKey})
 
       const cloudfrontInvalidations = cloudfrontInvalidateOptions.DistributionId
-        .map((distributionId) => new Promise((resolve, reject) => {
+        .map((DistributionId) => new Promise((resolve, reject) => {
           cloudfront.createInvalidation({
-            DistributionId: cloudfrontInvalidateOptions.DistributionId,
+            DistributionId,
             InvalidationBatch: {
               CallerReference: Date.now().toString(),
               Paths: {
@@ -311,7 +311,7 @@ module.exports = class S3Plugin {
             if (err)
               reject(err)
             else
-              success(res.Id)
+              resolve(res.Id)
           })
         }))
 
