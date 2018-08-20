@@ -151,6 +151,7 @@ var config = {
       s3Options: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID,
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        sessionToken: 'a234jasd'  // (optional) AWS session token for signing requests
       },
       s3UploadOptions: {
         Bucket: 'MyBucket'
