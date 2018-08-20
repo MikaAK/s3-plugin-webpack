@@ -281,14 +281,11 @@ module.exports = class S3Plugin {
     const {clientConfig, cloudfrontInvalidateOptions} = this
 
     if (cloudfrontInvalidateOptions.DistributionId) {
-      const {accessKeyId, secretAccessKey} = clientConfig.s3Options
-      const cloudfront = new CloudFront()
+      const {accessKeyId, secretAccessKey, sessionToken} = clientConfig.s3Options
+      const cloudfront = new CloudFront({accessKeyId, secretAccessKey, sessionToken})
 
       if (!_.isArray(cloudfrontInvalidateOptions.DistributionId))
         cloudfrontInvalidateOptions.DistributionId = [cloudfrontInvalidateOptions.DistributionId]
-
-      if (accessKeyId && secretAccessKey)
-        cloudfront.config.update({accessKeyId, secretAccessKey})
 
       const cloudfrontInvalidations = cloudfrontInvalidateOptions.DistributionId
         .map((DistributionId) => new Promise((resolve, reject) => {
