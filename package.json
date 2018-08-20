@@ -4,11 +4,11 @@
   "description": "Uploads compiled assets to s3 after build",
   "main": "dist/s3_plugin.js",
   "scripts": {
-    "build": "webpack",
+    "build": "webpack --mode production",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
     "test": "NODE_ENV='test' mocha -t 10000 --require babel-register",
     "lint": "eslint ./src ./test",
-    "watch": "webpack --watch",
+    "watch": "webpack --watch --mode development",
     "prep:major": "npm run build && npm version major",
     "prep:minor": "npm run build && npm version minor",
     "prep:patch": "npm run build && npm version patch"
