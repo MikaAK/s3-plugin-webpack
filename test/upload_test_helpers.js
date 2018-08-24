@@ -55,7 +55,7 @@ export default {
         var body = ''
 
         response.on('data', data => body += data)
-        response.on('end', () => resolve({body, headers: response.headers}))
+        response.on('end', () => resolve(body))
         response.on('error', reject)
       })
     })
@@ -195,7 +195,7 @@ export default {
         return {
           name: fetchFile,
           s3Url: S3_URL + fetchFile,
-          actual: file.body,
+          actual: file,
           expected: this.readFileFromOutputDir(fetchFile)
         }
       }))
