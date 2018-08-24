@@ -68,7 +68,7 @@ describe('S3 Webpack Upload', function() {
         .then(testForFailFromStatsOrGetS3Files)
         .then(assertFileMatches)
         .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
-        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+        .then(file => assert.match(file.body, testHelpers.S3_ERROR_REGEX, 'random file exists'))
     })
 
     it('uploads build to s3 with basePath', function() {
@@ -84,7 +84,33 @@ describe('S3 Webpack Upload', function() {
       return testHelpers.runWebpackConfig({config})
         .then(testForErrorsOrGetFileNames)
         .then(() => testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${randomFile.fileName}`))
-        .then(fileBody => assert.match(fileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+        .then(file => assert.match(file.body, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+    })
+
+    describe('with priority', function() {
+      it('uploads build to s3 in priority order', function() {
+        testHelpers.createOutputPath()
+        const s3Config = {priority: [/css/]}
+        const config = testHelpers.createWebpackConfig({s3Config})
+
+        return testHelpers.runWebpackConfig({config})
+          .then(testForErrorsOrGetFileNames)
+          .then((files) => {
+            const isCss = file => file.endsWith('css')
+            const isJs = file => file.endsWith('js')
+            const cssFileName = files.find(isCss)
+            const jsFilename = files.find(isJs)
+
+
+            return Promise.all([
+              testHelpers.fetch(`${testHelpers.S3_URL}/${cssFileName}`),
+              testHelpers.fetch(`${testHelpers.S3_URL}/${jsFilename}`)
+            ])
+          })
+          .then(([htmlResponse, cssResponse]) => {
+            assert.isTrue(htmlResponse.headers.date >= cssResponse.headers.date)
+          })
+      })
     })
   })
 
@@ -109,7 +135,7 @@ describe('S3 Webpack Upload', function() {
             testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
           ])
         })
-        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+        .then(([localFile, remoteFile]) => assert.equal(remoteFile.body, localFile, 'basepath and prefixes added'))
     })
 
     it('can transform base path without promise', function() {
@@ -132,7 +158,7 @@ describe('S3 Webpack Upload', function() {
             testHelpers.fetch(`${testHelpers.S3_URL}${BASE_PATH}/${NAME_PREFIX}/${fileName}`)
           ])
         })
-        .then(([localFile, remoteFile]) => assert.equal(remoteFile, localFile, 'basepath and prefixes added'))
+        .then(([localFile, remoteFile]) => assert.equal(remoteFile.body, localFile, 'basepath and prefixes added'))
     })
   })
 
@@ -153,7 +179,7 @@ describe('S3 Webpack Upload', function() {
       .then(testForFailFromStatsOrGetS3Files)
       .then(assertFileMatches)
       .then(() => testHelpers.fetch(testHelpers.S3_URL + randomFile.fileName))
-      .then(randomFileBody => assert.match(randomFileBody, testHelpers.S3_ERROR_REGEX, 'random file exists'))
+      .then(randomFile => assert.match(randomFile.body, testHelpers.S3_ERROR_REGEX, 'random file exists'))
   })
 
   it('excludes files from `exclude` property', function() {

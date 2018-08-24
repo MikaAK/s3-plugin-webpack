@@ -54,7 +54,7 @@ export default {
         var body = ''
 
         response.on('data', data => body += data)
-        response.on('end', () => resolve(body))
+        response.on('end', () => resolve({body, headers: response.headers}))
         response.on('error', reject)
       })
     })
@@ -130,7 +130,7 @@ export default {
       },
       plugins: [
         new HtmlWebpackPlugin(),
-        new ExtractTextPlugin('styles.css'),
+        new ExtractTextPlugin('[name]-[hash].css'),
         generateS3Config(s3Config)
       ],
       output: {
@@ -194,7 +194,7 @@ export default {
         return {
           name: fetchFile,
           s3Url: S3_URL + fetchFile,
-          actual: file,
+          actual: file.body,
           expected: this.readFileFromOutputDir(fetchFile)
         }
       }))
