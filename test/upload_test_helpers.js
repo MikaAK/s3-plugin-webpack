@@ -3,6 +3,7 @@ import https from 'https'
 import path from 'path'
 import webpack from 'webpack'
 import fs from 'fs'
+import {S3} from 'aws-sdk'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import s3Opts from './s3_options'
 import S3WebpackPlugin from '../src/s3_plugin'
@@ -224,5 +225,23 @@ export default {
 
   getCloudfrontInvalidateOptions() {
     return s3Opts.cloudfrontInvalidateOptions
+  },
+
+  getS3Object(key) {
+    const s3 = new S3({
+      accessKeyId: s3Opts.AWS_ACCESS_KEY,
+      secretAccessKey: s3Opts.AWS_SECRET_ACCESS_KEY
+    })
+
+
+    return new Promise((resolve, reject) => {
+      s3.getObject({Bucket: s3Opts.AWS_BUCKET, Key: key}, function(err, data) {
+        if (!err) {
+          resolve(data)
+        } else {
+          reject(err)
+        }
+      })
+    })
   }
 }

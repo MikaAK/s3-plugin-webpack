@@ -101,14 +101,13 @@ describe('S3 Webpack Upload', function() {
             const cssFileName = files.find(isCss)
             const jsFilename = files.find(isJs)
 
-
             return Promise.all([
-              testHelpers.fetch(`${testHelpers.S3_URL}/${cssFileName}`),
-              testHelpers.fetch(`${testHelpers.S3_URL}/${jsFilename}`)
+              testHelpers.getS3Object(cssFileName),
+              testHelpers.getS3Object(jsFilename)
             ])
           })
-          .then(([htmlResponse, cssResponse]) => {
-            assert.isTrue(htmlResponse.headers.date >= cssResponse.headers.date)
+          .then(([cssObject, jsObject]) => {
+            assert.isTrue(cssObject.LastModified.getTime() >= jsObject.LastModified.getTime())
           })
       })
     })
