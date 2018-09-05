@@ -41,7 +41,8 @@ module.exports = class S3Plugin {
       s3Options = {},
       cdnizerOptions = {},
       s3UploadOptions = {},
-      cloudfrontInvalidateOptions = {}
+      cloudfrontInvalidateOptions = {},
+      priority
     } = options
 
     this.uploadOptions = s3UploadOptions
@@ -59,6 +60,7 @@ module.exports = class S3Plugin {
       include,
       exclude,
       basePath,
+      priority,
       htmlFiles: typeof htmlFiles === 'string' ? [htmlFiles] : htmlFiles,
       progress: _.isBoolean(progress) ? progress : true
     }
@@ -240,16 +242,46 @@ module.exports = class S3Plugin {
     })
   }
 
+  prioritizeFiles(files) {
+    const remainingFiles = [...files]
+    const prioritizedFiles = this.options.priority
+      .map(reg => _.remove(remainingFiles, (file) => reg.test(file.name)))
+
+
+    return [remainingFiles, ...prioritizedFiles]
+  }
+
+  uploadPriorityChunk(priorityChunk) {
+    const uploadFiles = priorityChunk.map(file => this.uploadFile(file.name, file.path))
+
+
+    return Promise.all(uploadFiles.map(({promise}) => promise))
+  }
+
+  uploadInPriorityOrder(files) {
+    const priorityChunks = this.prioritizeFiles(files)
+    const uploadFunctions = priorityChunks
+      .map(priorityChunk =>
+        () => this.uploadPriorityChunk(priorityChunk))
+
+
+    return uploadFunctions.reduce((promise, uploadFn) => promise.then(uploadFn), Promise.resolve())
+  }
+
   uploadFiles(files = []) {
     return this.transformBasePath()
       .then(() => {
-        var uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
+        if (this.options.priority) {
+          return this.uploadInPriorityOrder(files)
+        } else {
+          const uploadFiles = files.map(file => this.uploadFile(file.name, file.path))
 
-        if (this.options.progress) {
-          this.setupProgressBar(uploadFiles)
+          if (this.options.progress) {
+            this.setupProgressBar(uploadFiles)
+          }
+
+          return Promise.all(uploadFiles.map(({promise}) => promise))
         }
-
-        return Promise.all(uploadFiles.map(({promise}) => promise))
       })
   }
 

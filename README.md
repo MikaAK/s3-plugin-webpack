@@ -212,6 +212,7 @@ var config = {
 - `cdnizerOptions`: options to pass to [cdnizer](https://www.npmjs.com/package/cdnizer)
 - `basePathTransform`: transform the base path to add a folder name. Can return a promise or a string
 - `progress`: Enable progress bar (defaults true)
+- `priority`: priority order to your files as regex array. The ones not matched by regex are uploaded first. This rule becomes useful when avoiding s3 eventual consistency issues
 
 ### Contributing
 All contributions are welcome. Please make a pull request and make sure things still pass after running `npm run test`
