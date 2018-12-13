@@ -32,7 +32,7 @@
   "homepage": "https://github.com/webpack-contrib/s3-plugin-webpack",
   "dependencies": {
     "aws-sdk": "^2.282.1",
-    "cdnizer": "^2.0.0",
+    "cdnizer": "^3.0.2",
     "lodash": "^4.17.10",
     "mime": "^2.3.1",
     "progress": "^2.0.0",
