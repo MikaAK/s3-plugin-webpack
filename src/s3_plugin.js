@@ -296,7 +296,7 @@ module.exports = class S3Plugin {
       Key = Key.substr(1)
 
     Key = Key.replace('//', '/')
-    
+
     if (s3Params.ContentType === undefined)
       s3Params.ContentType = mime.getType(fileName)
 
