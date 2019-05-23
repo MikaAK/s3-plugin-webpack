@@ -220,10 +220,6 @@ ansi-styles@^3.2.1:
   dependencies:
     color-convert "^1.9.0"
 
-ansi-styles@~1.0.0:
-  version "1.0.0"
-  resolved "https://registry.yarnpkg.com/ansi-styles/-/ansi-styles-1.0.0.tgz#cb102df1c56f5123eab8b67cd7b98027a0279178"
-
 anymatch@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/anymatch/-/anymatch-2.0.0.tgz#bcb24b4f37934d9aa7ac17b4adaf89e7c76ef2eb"
@@ -1036,16 +1032,15 @@ caniuse-lite@^1.0.30000844:
   version "1.0.30000877"
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30000877.tgz#f189673b86ecc06436520e3e391de6a13ca923b4"
 
-cdnizer@^2.0.0:
-  version "2.0.0"
-  resolved "https://registry.yarnpkg.com/cdnizer/-/cdnizer-2.0.0.tgz#5bd889bb17372894334dba47d9d0085204385893"
+cdnizer@^3.0.2:
+  version "3.0.2"
+  resolved "https://registry.yarnpkg.com/cdnizer/-/cdnizer-3.0.2.tgz#03f9f1664b1b43a20135f88d5e420e330408ab2d"
   dependencies:
     cdnjs-cdn-data "^0.1.1"
     google-cdn-data "^0.1.6"
-    jsdelivr-cdn-data "^0.1.1"
-    lodash "^2.4.1"
+    jsdelivr-cdn-data "git://github.com/shahata/jsdelivr-cdn-data.git#d014a2ad1bdfb4c6e3d3cefc7f264435281b91e0"
+    lodash "^4.17.11"
     minimatch "^3.0.2"
-    nomnom "^1.8.0"
 
 cdnjs-cdn-data@^0.1.1:
   version "0.1.2"
@@ -1081,14 +1076,6 @@ chalk@^2.0.0, chalk@^2.1.0, chalk@^2.3.2, chalk@^2.4.1:
     ansi-styles "^3.2.1"
     escape-string-regexp "^1.0.5"
     supports-color "^5.3.0"
-
-chalk@~0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/chalk/-/chalk-0.4.0.tgz#5199a3ddcd0c1efe23bc08c1b027b06176e0c64f"
-  dependencies:
-    ansi-styles "~1.0.0"
-    has-color "~0.1.0"
-    strip-ansi "~0.1.0"
 
 chardet@^0.4.0:
   version "0.4.2"
@@ -2161,10 +2148,6 @@ has-ansi@^2.0.0:
   dependencies:
     ansi-regex "^2.0.0"
 
-has-color@~0.1.0:
-  version "0.1.7"
-  resolved "https://registry.yarnpkg.com/has-color/-/has-color-0.1.7.tgz#67144a5260c34fc3cca677d041daf52fe7b78b2f"
-
 has-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/has-flag/-/has-flag-1.0.0.tgz#9d9e793165ce017a00f00418c43f942a7b1d11fa"
@@ -2631,11 +2614,12 @@ js-yaml@~3.7.0:
     argparse "^1.0.7"
     esprima "^2.6.0"
 
-jsdelivr-cdn-data@^0.1.1:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/jsdelivr-cdn-data/-/jsdelivr-cdn-data-0.1.1.tgz#a450e2dc6ecee7bb7b6f6a7294e5180acbc9c10a"
+"jsdelivr-cdn-data@git://github.com/shahata/jsdelivr-cdn-data.git#d014a2ad1bdfb4c6e3d3cefc7f264435281b91e0":
+  version "1.0.0"
+  uid d014a2ad1bdfb4c6e3d3cefc7f264435281b91e0
+  resolved "git://github.com/shahata/jsdelivr-cdn-data.git#d014a2ad1bdfb4c6e3d3cefc7f264435281b91e0"
   dependencies:
-    semver "~2.2.1"
+    semver "^5.3.0"
 
 jsesc@^1.3.0:
   version "1.3.0"
@@ -2764,13 +2748,9 @@ lodash.uniq@^4.5.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/lodash.uniq/-/lodash.uniq-4.5.0.tgz#d0225373aeb652adc1bc82e4945339a842754773"
 
-lodash@^2.4.1:
-  version "2.4.2"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-2.4.2.tgz#fadd834b9683073da179b3eae6d9c0d15053f73e"
-
-lodash@^4.14.0, lodash@^4.17.10, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.3.0:
-  version "4.17.10"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
+lodash@^4.14.0, lodash@^4.17.10, lodash@^4.17.11, lodash@^4.17.3, lodash@^4.17.4, lodash@^4.3.0:
+  version "4.17.11"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.11.tgz#b39ea6229ef607ecd89e2c8df12536891cac9b8d"
 
 lolex@^2.2.0, lolex@^2.3.2:
   version "2.3.2"
@@ -3074,13 +3054,6 @@ node-pre-gyp@^0.10.0:
     rimraf "^2.6.1"
     semver "^5.3.0"
     tar "^4"
-
-nomnom@^1.8.0:
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/nomnom/-/nomnom-1.8.1.tgz#2151f722472ba79e50a76fc125bb8c8f2e4dc2a7"
-  dependencies:
-    chalk "~0.4.0"
-    underscore "~1.6.0"
 
 nopt@^4.0.1:
   version "4.0.1"
@@ -4016,10 +3989,6 @@ semver@^5.3.0, semver@^5.5.0:
   version "5.5.1"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.5.1.tgz#7dfdd8814bdb7cabc7be0fb1d734cfb66c940477"
 
-semver@~2.2.1:
-  version "2.2.1"
-  resolved "https://registry.yarnpkg.com/semver/-/semver-2.2.1.tgz#7941182b3ffcc580bff1c17942acdf7951c0d213"
-
 semver@~5.0.1:
   version "5.0.3"
   resolved "https://registry.yarnpkg.com/semver/-/semver-5.0.3.tgz#77466de589cd5d3c95f138aa78bc569a3cb5d27a"
@@ -4258,10 +4227,6 @@ strip-ansi@^4.0.0:
   dependencies:
     ansi-regex "^3.0.0"
 
-strip-ansi@~0.1.0:
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/strip-ansi/-/strip-ansi-0.1.1.tgz#39e8a98d044d150660abe4a6808acf70bb7bc991"
-
 strip-eof@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/strip-eof/-/strip-eof-1.0.0.tgz#bb43ff5598a6eb05d89b59fcd129c983313606bf"
@@ -4449,10 +4414,6 @@ uglifyjs-webpack-plugin@^1.2.4:
     uglify-es "^3.3.4"
     webpack-sources "^1.1.0"
     worker-farm "^1.5.2"
-
-underscore@~1.6.0:
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/underscore/-/underscore-1.6.0.tgz#8b38b10cacdef63337b8b24e4ff86d45aea529a8"
 
 union-value@^1.0.0:
   version "1.0.0"
