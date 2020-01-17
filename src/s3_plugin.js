@@ -88,7 +88,7 @@ module.exports = class S3Plugin {
                              compiler.options.output.context ||
                              '.'
 
-    compiler.hooks.afterEmit.tapPromise(packageJson.name, async(compilation) => {
+    compiler.hooks.done.tapPromise(packageJson.name, async(compilation) => {
       var error
 
       if (!hasRequiredUploadOpts)
