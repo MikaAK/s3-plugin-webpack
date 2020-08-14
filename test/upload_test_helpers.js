@@ -3,24 +3,24 @@ import https from 'https'
 import path from 'path'
 import webpack from 'webpack'
 import fs from 'fs'
-import {S3} from 'aws-sdk'
+import { S3 } from 'aws-sdk'
 import HtmlWebpackPlugin from 'html-webpack-plugin'
 import s3Opts from './s3_options'
 import S3WebpackPlugin from '../src/s3_plugin'
-import {assert} from 'chai'
-import {spawnSync} from 'child_process'
-import ExtractTextPlugin from 'extract-text-webpack-plugin'
+import { assert } from 'chai'
+import { spawnSync } from 'child_process'
+import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
 const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
-      S3_ERROR_REGEX = /<Error>/,
-      OUTPUT_FILE_NAME = 's3Test',
-      OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
-      ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
-      createBuildFailError = errors => `Webpack Build Failed ${errors}`
+  S3_ERROR_REGEX = /<Error>/,
+  OUTPUT_FILE_NAME = 's3Test',
+  OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
+  ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
+  createBuildFailError = errors => `Webpack Build Failed ${errors}`
 
-var deleteFolderRecursive = function(path) {
+var deleteFolderRecursive = function (path) {
   if (fs.existsSync(path)) {
-    fs.readdirSync(path).forEach(function(file) {
+    fs.readdirSync(path).forEach(function (file) {
       var curPath = `${path}/${file}`
 
       if (fs.lstatSync(curPath).isDirectory()) { // recurse
@@ -34,7 +34,7 @@ var deleteFolderRecursive = function(path) {
   }
 }
 
-var generateS3Config = function(config) {
+var generateS3Config = function (config) {
   var params = _.merge({}, {
     s3Options: s3Opts.s3Options,
     s3UploadOptions: s3Opts.s3UploadOptions
@@ -50,8 +50,8 @@ export default {
   S3_ERROR_REGEX,
 
   fetch(url) {
-    return new Promise(function(resolve, reject) {
-      https.get(url, function(response) {
+    return new Promise(function (resolve, reject) {
+      https.get(url, function (response) {
         var body = ''
 
         response.on('data', data => body += data)
@@ -66,10 +66,10 @@ export default {
   },
 
   createFolder(pathToFolder) {
-    spawnSync('mkdir', ['-p', pathToFolder], {stdio: 'inherit'})
+    spawnSync('mkdir', ['-p', pathToFolder], { stdio: 'inherit' })
   },
 
-  testForFailFromStatsOrGetS3Files({errors, stats}) {
+  testForFailFromStatsOrGetS3Files({ errors, stats }) {
     if (errors)
       return assert.fail([], errors, createBuildFailError(errors))
 
@@ -77,7 +77,7 @@ export default {
   },
 
   testForFailFromDirectoryOrGetS3Files(directory) {
-    return ({errors}) => {
+    return ({ errors }) => {
       var basePath = this.addSlashToPath(`${directory}`)
 
       if (errors)
@@ -98,16 +98,16 @@ export default {
 
   createRandomFile(newPath) {
     var hash = Math.random() * 10000,
-        fileName = `random-file-${hash}`,
-        newFileName = `${newPath}/${fileName}`
+      fileName = `random-file-${hash}`,
+      newFileName = `${newPath}/${fileName}`
 
     // Create Random File to upload
     fs.writeFileSync(newFileName, `This is a new file - ${hash}`)
 
-    return {fullPath: newFileName, fileName}
+    return { fullPath: newFileName, fileName }
   },
 
-  createWebpackConfig({config, s3Config} = {}) {
+  createWebpackConfig({ config, s3Config } = {}) {
     return _.extend({
       entry: ENTRY_PATH,
       module: {
@@ -122,16 +122,12 @@ export default {
         },
         {
           test: /\.css$/,
-          use: ExtractTextPlugin.extract({
-            fallback: 'style-loader',
-            use: 'css-loader'
-          })
-        }
-        ]
+          use: [MiniCssExtractPlugin.loader, 'css-loader']
+        }]
       },
       plugins: [
         new HtmlWebpackPlugin(),
-        new ExtractTextPlugin('[name]-[hash].css'),
+        new MiniCssExtractPlugin(),
         generateS3Config(s3Config)
       ],
       output: {
@@ -141,11 +137,11 @@ export default {
     }, config)
   },
 
-  runWebpackConfig({config}) {
+  runWebpackConfig({ config }) {
     this.createOutputPath()
 
-    return new Promise(function(resolve, reject) {
-      webpack(config, function(err, stats) {
+    return new Promise(function (resolve, reject) {
+      webpack(config, function (err, stats) {
         if (err) {
           reject(err)
 
@@ -154,9 +150,9 @@ export default {
 
         // console.log(JSON.stringify(arguments, null, 2))
         if (stats.toJson().errors.length)
-          resolve({errors: stats.toJson().errors})
+          resolve({ errors: stats.toJson().errors })
         else
-          resolve({config, stats})
+          resolve({ config, stats })
       })
     })
   },
@@ -164,7 +160,7 @@ export default {
   getFilesFromDirectory(directory, basePath) {
     var res = (function readDirectory(dir) {
       return fs.readdirSync(dir)
-        .reduce(function(res, file) {
+        .reduce(function (res, file) {
           var fPath = path.resolve(dir, file)
 
           if (fs.lstatSync(fPath).isDirectory())
@@ -205,7 +201,7 @@ export default {
     return fs.readFileSync(path.resolve(OUTPUT_PATH, file)).toString()
   },
 
-  testForErrorsOrGetFileNames({stats, errors}) {
+  testForErrorsOrGetFileNames({ stats, errors }) {
     if (errors)
       return assert.fail([], errors, createBuildFailError(errors))
 
@@ -214,7 +210,7 @@ export default {
 
   assertFileMatches(files) {
     var errors = _(files)
-      .map(({expected, actual, name, s3Url}) => {
+      .map(({ expected, actual, name, s3Url }) => {
         return assert.equal(actual, expected, `File: ${name} URL: ${s3Url} - NO MATCH`)
       })
       .compact()
@@ -235,7 +231,7 @@ export default {
 
 
     return new Promise((resolve, reject) => {
-      s3.getObject({Bucket: s3Opts.AWS_BUCKET, Key: key}, function(err, data) {
+      s3.getObject({ Bucket: s3Opts.AWS_BUCKET, Key: key }, function (err, data) {
         if (!err) {
           resolve(data)
         } else {

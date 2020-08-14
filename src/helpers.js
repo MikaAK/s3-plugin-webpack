@@ -61,3 +61,9 @@ export const testRule = (rule, subject) => {
     throw new Error('Invalid include / exclude rule')
   }
 }
+
+export const stripQuery = file => {
+  const queryStringIndex = file.indexOf('?')
+  if (queryStringIndex < 0) return file
+  return file.substr(0, queryStringIndex)
+}
