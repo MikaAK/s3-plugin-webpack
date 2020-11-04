@@ -1,6 +1,6 @@
-import dotenv from "dotenv";
+import dotenv from 'dotenv'
 
-if (!process.env.CI) dotenv.config();
+if (!process.env.CI) dotenv.config()
 
 const {
   AWS_BUCKET,
@@ -8,7 +8,7 @@ const {
   AWS_ACCESS_KEY,
   AWS_SECRET_ACCESS_KEY,
   CLOUDFRONT_DISTRIBUTION_ID,
-} = process.env;
+} = process.env
 
 export default {
   AWS_BUCKET,
@@ -29,6 +29,6 @@ export default {
 
   cloudfrontInvalidateOptions: {
     DistributionId: CLOUDFRONT_DISTRIBUTION_ID,
-    Items: ["/*"],
+    Items: ['/*'],
   },
-};
+}
