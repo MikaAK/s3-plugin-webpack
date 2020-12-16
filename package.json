@@ -6,7 +6,7 @@
   "scripts": {
     "build": "webpack --mode production",
     "prepublishOnly": "npm run lint && npm run test && npm run build",
-    "test": "NODE_ENV='test' mocha -t 10000 --require babel-register",
+    "test": "NODE_ENV='test' mocha -t 10000 --require @babel/register",
     "lint": "eslint ./src ./test",
     "watch": "webpack --watch --mode development",
     "prep:major": "npm run build && npm version major",
@@ -39,9 +39,10 @@
     "recursive-readdir": "^2.2.2"
   },
   "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^8.1.0",
-    "babel-preset-env": "^1.6.1",
+    "@babel/core": "^7.12.0",
+    "@babel/preset-env": "^7.12.0",
+    "@babel/register": "^7.12.10",
+    "babel-loader": "^8.2.0",
     "chai": "^4.2.0",
     "css-loader": "^5.0.0",
     "dotenv": "^8.2.0",
