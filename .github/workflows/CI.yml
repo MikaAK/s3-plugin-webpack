@@ -1,0 +1,27 @@
+name: CI
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version:
+          - 10
+          - 12
+          - 14
+        command:
+          - lint
+          - test
+          - build
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node-version }}
+      - run: |
+          yarn install
+      - run: |
+          yarn ${{ matrix.command }}

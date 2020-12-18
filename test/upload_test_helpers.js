@@ -16,7 +16,7 @@ const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts
       OUTPUT_FILE_NAME = 's3Test',
       OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
       ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
-      createBuildFailError = (errors) => `Webpack Build Failed ${errors}`
+      createBuildFailError = (errors) => `Webpack Build Failed ${errors.map(JSON.stringify)}`
 
 var deleteFolderRecursive = function(path) {
   if (fs.existsSync(path)) {
