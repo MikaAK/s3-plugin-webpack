@@ -11,12 +11,16 @@ import {assert} from 'chai'
 import {spawnSync} from 'child_process'
 import MiniCssExtractPlugin from 'mini-css-extract-plugin'
 
-const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`,
-      S3_ERROR_REGEX = /<Error>/,
-      OUTPUT_FILE_NAME = 's3Test',
-      OUTPUT_PATH = path.resolve(__dirname, '.tmp'),
-      ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js'),
-      createBuildFailError = (errors) => `Webpack Build Failed ${errors.map(JSON.stringify)}`
+const S3_URL = `https://s3.dualstack.${s3Opts.AWS_REGION}.amazonaws.com/${s3Opts.AWS_BUCKET}/`
+const S3_ERROR_REGEX = /<Error>/
+const OUTPUT_FILE_NAME = 's3Test'
+const OUTPUT_PATH = path.resolve(__dirname, '.tmp')
+const ENTRY_PATH = path.resolve(__dirname, 'fixtures/index.js')
+
+const createBuildFailError = (errors) => [
+  'Webpack Build Failed',
+  ...errors.map(e => e.stack),
+].join('\n')
 
 var deleteFolderRecursive = function(path) {
   if (fs.existsSync(path)) {
