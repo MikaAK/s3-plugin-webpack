@@ -1,4 +1,3 @@
-
 S3 Plugin
 ===
 [![Travis Badge](https://travis-ci.org/MikaAK/s3-plugin-webpack.svg?branch=master)](https://travis-ci.org/MikaAK/s3-plugin-webpack)
