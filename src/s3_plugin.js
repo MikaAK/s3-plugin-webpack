@@ -250,7 +250,7 @@ module.exports = class S3Plugin {
       upload.on('httpUploadProgress', ({loaded}) => {
         progressValue += loaded
 
-        progressBar.update(progressValue)
+        progressBar.update(progressValue / progressTotal)
       })
     })
   }
