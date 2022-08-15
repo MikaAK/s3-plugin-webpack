@@ -326,16 +326,17 @@ module.exports = class S3Plugin {
 
   invalidateCloudfront() {
     const {clientConfig, cloudfrontInvalidateOptions} = this
-
+    const {accessKeyId: cfAccessKeyId, secretAccessKey: cfSecretAccessKey} = cloudfrontInvalidateOptions
     if (cloudfrontInvalidateOptions.DistributionId) {
       const {
         accessKeyId,
         secretAccessKey,
         sessionToken,
       } = clientConfig.s3Options
+
       const cloudfront = new CloudFront({
-        accessKeyId,
-        secretAccessKey,
+        accessKeyId: cfAccessKeyId ? cfAccessKeyId : accessKeyId,
+        secretAccessKey: cfSecretAccessKey ? cfSecretAccessKey : secretAccessKey,
         sessionToken,
       })
 
