@@ -6,7 +6,9 @@ import ProgressBar from 'progress'
 import cdnizer from 'cdnizer'
 import _ from 'lodash'
 import mime from 'mime/lite'
-import {S3, CloudFront} from 'aws-sdk'
+import {CloudFront} from '@aws-sdk/client-cloudfront'
+import {S3} from '@aws-sdk/client-s3'
+import {Upload} from '@aws-sdk/lib-storage'
 
 import packageJson from '../package.json'
 
@@ -315,13 +317,13 @@ module.exports = class S3Plugin {
       s3Params.ContentType = mime.getType(fileName)
 
     const Body = fs.createReadStream(file)
-    const upload = this.client.upload(
-      _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
-    )
+    const params = _.merge({Key, Body}, DEFAULT_UPLOAD_OPTIONS, s3Params)
+
+    const upload = new Upload({client: this.client, params})
 
     if (!this.noCdnizer) this.cdnizerOptions.files.push(`*${fileName}*`)
 
-    return {upload, promise: upload.promise()}
+    return {upload, promise: upload.done()}
   }
 
   invalidateCloudfront() {
