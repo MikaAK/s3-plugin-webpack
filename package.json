@@ -31,7 +31,10 @@
   },
   "homepage": "https://github.com/webpack-contrib/s3-plugin-webpack",
   "dependencies": {
-    "aws-sdk": "^2.784.0",
+    "@aws-sdk/abort-controller": "^3.295.0",
+    "@aws-sdk/client-cloudfront": "^3.295.0",
+    "@aws-sdk/client-s3": "^3.295.0",
+    "@aws-sdk/lib-storage": "^3.295.0",
     "cdnizer": "^3.2.1",
     "lodash": "^4.17.20",
     "mime": "^2.4.6",
